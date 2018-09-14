@@ -8,6 +8,7 @@
 #include <aerial_manipulators/KalmanFilter.h>
 #include <aerial_manipulators/median_filter.h>
 #include <std_srvs/Empty.h>
+#include <std_msgs/Int32.h>
 #include "ros/ros.h"
 #include <ros/package.h>
 
@@ -34,6 +35,7 @@ class WPManipulatorControl
 		void joint_controller_state_cb_ros(const dynamixel_workbench_msgs::DynamixelStateList &msg);
 		bool wrench_zero_all_cb(std_srvs::Empty::Request  &req, std_srvs::Empty::Response &res);
 		void limitJointsPosition(float *q);
+		void mode_cb_ros(const std_msgs::Int32 &msg);
 
 		
 		WPManipulatorDirectKinematics manipulator_direct;
@@ -43,15 +45,17 @@ class WPManipulatorControl
 		Eigen::Matrix4d Tworld_uav_origin_, Tuav_origin_world_, Tworld_wp_end_effector_ref_;
 		Eigen::MatrixXd wrench_;
 
-		int rate_;
+		int rate_, manipulator_mode_;
 		float q1_pos_meas_, q2_pos_meas_, q3_pos_meas_, q4_pos_meas_, q5_pos_meas_;
 		float q1_torque_meas_, q2_torque_meas_, q3_torque_meas_;
 		float q4_torque_meas_, q5_torque_meas_;
+		float arm_upper_limits_[6], arm_lower_limits_[6];
 
 		bool new_dynamixel_measurement_, start_flag_;
 
 		ros::Subscriber joint_state_sub_ros_, mmuav_position_sub_ros_;
 		ros::Subscriber wp_manipulator_end_effector_position_sub_ros_;
+		ros::Subscriber mode_sub_ros_;
 		ros::Publisher manipulator_position_pub_ros_, manipulator_wrench_ros_pub_;
 
 		ros::ServiceServer wrench_zero_all_srv_ros_;

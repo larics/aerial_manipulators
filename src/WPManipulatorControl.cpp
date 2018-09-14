@@ -13,7 +13,8 @@ WPManipulatorControl::WPManipulatorControl():
 	q3_pos_meas_(0),
 	q4_pos_meas_(0),
 	q5_pos_meas_(0), 
-	start_flag_(false)
+	start_flag_(false),
+	manipulator_mode_(0)
 
 {
 	rate_ = 30;
@@ -22,8 +23,8 @@ WPManipulatorControl::WPManipulatorControl():
 
 	joint_state_sub_ros_ = n_.subscribe("dynamixel_state", 1, &WPManipulatorControl::joint_controller_state_cb_ros, this);
 	mmuav_position_sub_ros_ = n_.subscribe("pose", 1, &WPManipulatorControl::mmuav_position_cb_ros, this);
-	wp_manipulator_end_effector_position_sub_ros_ = n_.subscribe("wp_manipulator/set_point", 1, &WPManipulatorControl::wp_manipulator_end_effector_position_cb_ros, this);
-	
+	wp_manipulator_end_effector_position_sub_ros_ = n_.subscribe("wp_manipulator/position_set_point", 1, &WPManipulatorControl::wp_manipulator_end_effector_position_cb_ros, this);
+	mode_sub_ros_ = n_.subscribe("mode", 1, &WPManipulatorControl::mode_cb_ros, this);
 
 	manipulator_wrench_ros_pub_ = n_.advertise<geometry_msgs::WrenchStamped>("wrench", 1);
 	manipulator_position_pub_ros_ = n_.advertise<geometry_msgs::PoseStamped>("position", 1);
@@ -89,6 +90,11 @@ bool WPManipulatorControl::wrench_zero_all_cb(std_srvs::Empty::Request  &req, st
 	return true;
 }
 
+void WPManipulatorControl::mode_cb_ros(const std_msgs::Int32 &msg) 
+{
+	manipulator_mode_ = msg.data;
+}
+
 double WPManipulatorControl::deadzone(double value, double lower_limit, double upper_limit)
 {
 	if (value > upper_limit) return (value-upper_limit);
@@ -99,13 +105,16 @@ double WPManipulatorControl::deadzone(double value, double lower_limit, double u
 void WPManipulatorControl::LoadParameters(std::string file)
 {
 	YAML::Node config = YAML::LoadFile(file);
-	std::vector<double> theta, a, d, arm_origin;
+	std::vector<double> theta, a, d, arm_origin, arm_upper_limits;
+	std::vector<double> arm_lower_limits;
 	WPManipulatorDirectKinematics::DH_Parameters_TypeDef dhParams;
 
 	theta = config["theta"].as<std::vector<double> >();
 	a = config["a"].as<std::vector<double> >();
 	d = config["d"].as<std::vector<double> >();
 	arm_origin = config["origin"].as<std::vector<double> >();
+	arm_upper_limits = config["limits"]["upper"].as<std::vector<double> >();
+	arm_lower_limits = config["limits"]["upper"].as<std::vector<double> >();
 
 
 	Tuav_origin_arm_ <<  cos(arm_origin[5])*cos(arm_origin[4]),  cos(arm_origin[5])*sin(arm_origin[4])*sin(arm_origin[3])-sin(arm_origin[5])*cos(arm_origin[3]),  cos(arm_origin[5])*sin(arm_origin[4])*cos(arm_origin[3])+sin(arm_origin[5])*sin(arm_origin[3]), arm_origin[0],
@@ -120,6 +129,14 @@ void WPManipulatorControl::LoadParameters(std::string file)
 		dhParams.alpha[i] = 0;
 		dhParams.d[i] = d[i];
 		dhParams.a[i] = a[i];
+		arm_upper_limits_[i] = arm_upper_limits[i];
+		arm_lower_limits_[i] = arm_lower_limits[i];
+	}
+
+	for (int i=0; i<5; i++) 
+	{
+		arm_upper_limits_[i] = arm_upper_limits[i];
+		arm_lower_limits_[i] = arm_lower_limits[i];
 	}
 
 	Tuav_origin_arm_inv_ = Tuav_origin_arm_.inverse();
@@ -141,11 +158,11 @@ void WPManipulatorControl::start()
 
 	float orientationEuler[3], orientationQuaternion[4], Q[5];
 
-	while (!start_flag_ && ros::ok()) {
+	/*while (!start_flag_ && ros::ok()) {
 		ros::spinOnce();
 		printf("Waiting for torque measurements.\n");
 		ros::Duration(0.5).sleep();
-	}
+	}*/
 
 
 	while (ros::ok())
@@ -158,11 +175,17 @@ void WPManipulatorControl::start()
 		Tworld_end_effector_dk = Tworld_uav_origin_ * Tuav_origin_arm_ * T16_dk;
 
 		getAnglesFromRotationTranslationMatrix(Tworld_end_effector_dk, orientationEuler);
-
 		euler2quaternion(orientationEuler, orientationQuaternion);
 
-		std::cout<<q1_torque_meas_<<std::endl;
-		std::cout<<q1_pos_meas_<<std::endl;
+		manipulator_pose.header.stamp = ros::Time::now();
+		manipulator_pose.header.frame_id = "wp_manipulator";
+		manipulator_pose.pose.position.x = Tworld_end_effector_dk(0,3);
+		manipulator_pose.pose.position.y = Tworld_end_effector_dk(1,3);
+		manipulator_pose.pose.position.z = Tworld_end_effector_dk(2,3);
+		manipulator_pose.pose.orientation.x = orientationQuaternion[1];
+		manipulator_pose.pose.orientation.y = orientationQuaternion[2];
+		manipulator_pose.pose.orientation.z = orientationQuaternion[3];
+		manipulator_pose.pose.orientation.w = orientationQuaternion[0];
 
 		//force calculation
 		q1_torque_kalman_.modelUpdate(1.0/rate_);
@@ -193,7 +216,7 @@ void WPManipulatorControl::start()
 		//inverse kinematics
 		T16_ref = Tuav_origin_arm_inv_ * Tuav_origin_world_ * Tworld_end_effector_dk;/*Tworld_wp_end_effector_ref_;*/
 		getAnglesFromRotationTranslationMatrix(T16_ref, orientationEuler);
-		std::cout<<"Roll: "<<orientationEuler[0]<<"Pitch: "<<orientationEuler[1]<<" Yaw: "<<orientationEuler[2]<<std::endl;
+		//std::cout<<"Roll: "<<orientationEuler[0]<<"Pitch: "<<orientationEuler[1]<<" Yaw: "<<orientationEuler[2]<<std::endl;
 		nbr_of_solutions = manipulator_inverse.ik_calculate(T16_ref(0,3), T16_ref(1,3), T16_ref(2,3), orientationEuler[1], orientationEuler[2]);
 
 		/*for (int i=0; i <nbr_of_solutions; i ++) {
@@ -210,14 +233,24 @@ void WPManipulatorControl::start()
 
 			limitJointsPosition(Q);
 
-			std::cout<<"Q1: "<<Q[0]<<std::endl;
+			/*std::cout<<"Q1: "<<Q[0]<<std::endl;
 			std::cout<<"Q2: "<<Q[1]<<std::endl;
 			std::cout<<"Q3: "<<Q[2]<<std::endl;
 			std::cout<<"Q4: "<<Q[3]<<std::endl;
 			std::cout<<"Q5: "<<Q[4]<<std::endl;
-			std::cout<<std::endl;
+			std::cout<<std::endl;*/
 		}
-		std::cout<<std::endl;
+		//std::cout<<std::endl;
+
+
+		if (manipulator_mode_ == 0) //dk mode
+		{
+
+		}
+		else if (manipulator_mode_ == 1) //ik mode
+		{
+
+		}
 
 		manipulator_wrench.header.stamp = ros::Time::now();
 		manipulator_wrench.header.frame_id = "wp_manipulator";
@@ -229,20 +262,13 @@ void WPManipulatorControl::start()
 		manipulator_wrench.wrench.torque.z = wrench_(5,0);
 		manipulator_wrench_ros_pub_.publish(manipulator_wrench);
 
-		manipulator_pose.header.stamp = ros::Time::now();
-		manipulator_pose.header.frame_id = "wp_manipulator";
-		manipulator_pose.pose.position.x = Tworld_end_effector_dk(0,3);
-		manipulator_pose.pose.position.y = Tworld_end_effector_dk(1,3);
-		manipulator_pose.pose.position.z = Tworld_end_effector_dk(2,3);
-		manipulator_pose.pose.orientation.x = orientationQuaternion[1];
-		manipulator_pose.pose.orientation.y = orientationQuaternion[2];
-		manipulator_pose.pose.orientation.z = orientationQuaternion[3];
-		manipulator_pose.pose.orientation.w = orientationQuaternion[0];
+		
 		manipulator_position_pub_ros_.publish(manipulator_pose);
 
 		loop_rate.sleep();
 	}
 }
+
 
 void WPManipulatorControl::joint_controller_state_cb_ros(const dynamixel_workbench_msgs::DynamixelStateList &msg)
 {
@@ -501,14 +527,12 @@ int WPManipulatorControl::joint_criterion_function(float *q1_in, float *q2_in, f
 }
 
 void WPManipulatorControl::limitJointsPosition(float *q) {
-	if (q[0] > M_PI / 2.0) q[0] = M_PI / 2.0;
-	else if (q[0] < -M_PI / 2.0) q[0] = -M_PI / 2.0;
 
-	if (q[1] > 3.0*M_PI / 4.0) q[1] = 3.0*M_PI / 4.0;
-	else if (q[1] < - 3.0*M_PI / 4.0) q[1] = - 3.0*M_PI / 4.0;
-
-	if (q[2] > M_PI / 2.0) q[2] = M_PI / 2.0;
-	else if (q[2] < - M_PI / 2.0) q[2] = - M_PI / 2.0;
+	for (int i=0; i<5; i++) 
+	{
+		if (q[i] > arm_upper_limits_[i]) q[i] = arm_upper_limits_[i];
+		else if (q[i] < arm_lower_limits_[i]) q[i] = arm_lower_limits_[i];
+	}
 }
 
 void WPManipulatorControl::set_rate(int rate)
@@ -528,7 +552,7 @@ int main(int argc, char **argv)
 
 	WPManipulatorControl wpm_control;
 
-	private_node_handle_.param("dh_parameters_file", dh_parameters_file, std::string("/config/wp_manipulator_dh_parameters.yaml"));
+	private_node_handle_.param("dh_parameters_file", dh_parameters_file, std::string("/cfg/wp_manipulator_dh_parameters.yaml"));
 	private_node_handle_.param("rate", rate, int(200));
 
 	wpm_control.LoadParameters(path+dh_parameters_file);
