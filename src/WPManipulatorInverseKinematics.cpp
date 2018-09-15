@@ -106,6 +106,32 @@ Eigen::MatrixXd WPManipulatorInverseKinematics::getJacobian(double q1, double q2
     return J;
 }
 
+int WPManipulatorInverseKinematics::ik2_calculate(float y, float rot_z) {
+	int number_of_solutions = 0;
+	float w6, w2;
+
+	if (isInit)
+	{
+		w2 = y;
+		w6 = rot_z;
+
+		q1_[0] = asin((w2 - dhParams_.a[1] * sin(w6)) / dhParams_.a[0]);
+		q1_[1] = M_PI - asin((w2 - dhParams_.a[1] * sin(w6)) / dhParams_.a[0]);
+
+		q2_[0] = w6 - q1_[0];
+		q2_[1] = w6 - q1_[1];
+
+		q1_[0] = atan2(sin(q1_[0] - dhParams_.theta[0]), cos(q1_[0] - dhParams_.theta[0]));
+		q2_[0] = atan2(sin(q2_[0] - dhParams_.theta[1]), cos(q2_[0] - dhParams_.theta[1]));
+		q1_[1] = atan2(sin(q1_[1] - dhParams_.theta[0]), cos(q1_[1] - dhParams_.theta[0]));
+		q2_[1] = atan2(sin(q2_[1] - dhParams_.theta[1]), cos(q2_[1] - dhParams_.theta[1]));
+
+		number_of_solutions = 2;
+	}
+
+	return number_of_solutions;
+}
+
 int WPManipulatorInverseKinematics::ik_calculate(float x, float y, float z, float rot_y, float rot_z)
 {
 	int number_of_solutions = 0;

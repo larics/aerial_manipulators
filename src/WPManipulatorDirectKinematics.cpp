@@ -50,6 +50,34 @@ Eigen::Matrix4d WPManipulatorDirectKinematics::dk_calculate(float q1, float q2, 
 
 }
 
+Eigen::Matrix4d WPManipulatorDirectKinematics::dk_2_calculate(float q1, float q2) 
+{
+	if (isInit)
+	{
+		float theta[2], alpha[2], d[2], a[2];
+		Eigen::Matrix4d T12;
+
+		theta[0] = dhParams_.theta[0] + q1;
+		theta[1] = dhParams_.theta[1] + q2;
+
+		alpha[0] = dhParams_.alpha[0];
+		alpha[1] = dhParams_.alpha[1];
+
+		d[0] = dhParams_.d[0];
+		d[1] = dhParams_.d[1];
+
+		a[0] = dhParams_.a[0];
+		a[1] = dhParams_.a[1];
+
+		T12 << cos(theta[0] + theta[1]), 0, -sin(theta[0] + theta[1]), a[1]*cos(theta[0] + theta[1]) + a[0]*cos(theta[0]),
+			   sin(theta[0] + theta[1]), 0,  cos(theta[0] + theta[1]), a[1]*sin(theta[0] + theta[1]) + a[0]*sin(theta[0]),
+			   0,                       -1,  0,                        0,
+			   0,                        0,  0,                        1;
+
+		return T12;                    
+	}
+}
+
 void WPManipulatorDirectKinematics::LoadParameters(std::string file)
 {
 	YAML::Node config = YAML::LoadFile(file);

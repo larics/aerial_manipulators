@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_definitions(-std=c++11)
 
 find_package(cmake_modules REQUIRED)
+find_package(Eigen 3 REQUIRED)
 
 catkin_package(
    INCLUDE_DIRS include

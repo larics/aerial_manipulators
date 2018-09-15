@@ -14,6 +14,7 @@ class WPManipulatorInverseKinematics
 		int ik_calculate(float x, float y, float z, float rot_y, float rot_z);
 		void setDHparams(WPManipulatorDirectKinematics::DH_Parameters_TypeDef dhParams);
 		Eigen::MatrixXd getJacobian(double q1, double q2, double q3, double q4, double q5);
+		int ik2_calculate(float y, float rot_z);
 		int getMaxNumberOfSolutions(void);
 		float *getQ1(void);
 		float *getQ2(void);
