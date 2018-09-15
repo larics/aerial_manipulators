@@ -106,7 +106,7 @@ Eigen::MatrixXd WPManipulatorInverseKinematics::getJacobian(double q1, double q2
     return J;
 }
 
-int WPManipulatorInverseKinematics::ik2_calculate(float y, float rot_z) {
+int WPManipulatorInverseKinematics::ik_T12_calculate(float y, float rot_z) {
 	int number_of_solutions = 0;
 	float w6, w2;
 
@@ -127,6 +127,145 @@ int WPManipulatorInverseKinematics::ik2_calculate(float y, float rot_z) {
 		q2_[1] = atan2(sin(q2_[1] - dhParams_.theta[1]), cos(q2_[1] - dhParams_.theta[1]));
 
 		number_of_solutions = 2;
+	}
+
+	return number_of_solutions;
+}
+
+int WPManipulatorInverseKinematics::getFeasibleRotationT26(float x, float y, float *rot_z) {
+	float temp1, temp2, z, det, s345[2];
+	int solution;
+
+	temp1 = dhParams_.a[3]*dhParams_.a[3] + dhParams_.a[2]*dhParams_.a[2] + 2*dhParams_.a[3]*dhParams_.a[2] - dhParams_.d[5]*dhParams_.d[5] - x*x - y*y;
+	temp2 = 2*dhParams_.d[5];
+
+	z = temp1/temp2;
+
+	det = 4*x*x*z*z - 4*(x*x + y*y)*(z*z - y*y);
+
+	if (det < 0) solution = 0;
+	else if (det == 0) {
+		solution = 1;
+		s345[0] = (x*z) / ((x*x + y*y));
+		s345[1] = (x*z) / ((x*x + y*y));
+
+	}
+	else {
+		temp1 = (2.0*x*z + sqrt(det)) / (2.0*(x*x + y*y));
+		temp2 = (2.0*x*z - sqrt(det)) / (2.0*(x*x + y*y));
+
+		if (abs(temp1) > 1 || abs(temp2) > 1) solution = 0;
+		else solution = 1;
+		
+		if (temp1 < temp2)
+		{
+			s345[0] = temp1;
+			s345[1] = temp2;
+		}
+		else
+		{
+			s345[0] = temp2;
+			s345[1] = temp1;
+		}
+	}
+
+	rot_z[0] = asin(s345[0]);
+	rot_z[1] = asin(s345[1]);
+
+	rot_z[2] = M_PI - asin(s345[0]);
+	rot_z[3] = M_PI - asin(s345[1]);
+
+	return solution;
+
+}
+
+int WPManipulatorInverseKinematics::ik_T26_calculate(float x, float y, float rot_z) 
+{
+	int number_of_solutions = 0;
+	float w6, w1, w2, t1, t2, temp1, temp2;
+	bool isS4Zero;
+
+	if (isInit)
+	{
+		w1 = x;
+		w2 = y;
+		w6 = rot_z;
+
+		t1 = w1 + dhParams_.d[5]*sin(w6);
+		t2 = w2 - dhParams_.d[5]*cos(w6);
+
+		//q4
+		temp1 = t1*t1 + t2*t2 - dhParams_.a[3]*dhParams_.a[3] - dhParams_.a[2]*dhParams_.a[2];
+		temp2 = 2*dhParams_.a[3]*dhParams_.a[2];
+
+		if (fabs(temp1 - temp2) < 0.001) temp1 = temp2;
+
+		q4_[0] = acos(temp1/temp2);
+		q4_[1] = acos(temp1/temp2);
+
+		q4_[2] = -acos(temp1/temp2);
+		q4_[3] = -acos(temp1/temp2);
+
+		//q3
+		if (fabs(sin(q4_[0])) < 0.001) {
+			isS4Zero = true;
+		}
+		else {
+			isS4Zero = false;
+		}
+
+		if (!isS4Zero) {
+			temp1 = dhParams_.a[3]*sin(q4_[0])*t2 + dhParams_.a[3]*cos(q4_[0])*t1 + dhParams_.a[2]*t1;
+			temp2 = dhParams_.a[3]*dhParams_.a[3] + 2*dhParams_.a[3]*dhParams_.a[2]*cos(q4_[0]) + dhParams_.a[2]*dhParams_.a[2];
+			if (fabs(temp1 - temp2) < 0.001) temp1 = temp2;
+
+			q3_[0] = acos(temp1/temp2);
+			q3_[1] = -acos(temp1/temp2);
+		}
+		else {
+			temp1 = dhParams_.a[3]*cos(q4_[0])*t2 + dhParams_.a[2]*t2 - dhParams_.a[3]*sin(q4_[0])*t1;
+			temp2 = dhParams_.a[3]*dhParams_.a[3] + 2*dhParams_.a[3]*dhParams_.a[2]*cos(q4_[0]) + dhParams_.a[2]*dhParams_.a[2];
+			if (fabs(temp1 - temp2) < 0.001) temp1 = temp2;
+
+			q3_[0] = asin(temp1/temp2);
+			q3_[1] = M_PI - asin(temp1/temp2);
+		}
+
+		if (fabs(sin(q4_[2])) < 0.001) {
+			isS4Zero = true;
+		}
+		else {
+			isS4Zero = false;
+		}
+
+		if (!isS4Zero) {
+			temp1 = dhParams_.a[3]*sin(q4_[2])*t2 + dhParams_.a[3]*cos(q4_[2])*t1 + dhParams_.a[2]*t1;
+			temp2 = dhParams_.a[3]*dhParams_.a[3] + 2*dhParams_.a[3]*dhParams_.a[2]*cos(q4_[2]) + dhParams_.a[2]*dhParams_.a[2];
+			if (fabs(temp1 - temp2) < 0.001) temp1 = temp2;
+
+			q3_[2] = acos(temp1/temp2);
+			q3_[3] = -acos(temp1/temp2);
+		}
+		else {
+			temp1 = dhParams_.a[3]*cos(q4_[2])*t2 + dhParams_.a[2]*t2 - dhParams_.a[3]*sin(q4_[2])*t1;
+			temp2 = dhParams_.a[3]*dhParams_.a[3] + 2*dhParams_.a[3]*dhParams_.a[2]*cos(q4_[2]) + dhParams_.a[2]*dhParams_.a[2];
+			if (fabs(temp1 - temp2) < 0.001) temp1 = temp2;
+
+			q3_[2] = asin(temp1/temp2);
+			q3_[3] = M_PI - asin(temp1/temp2);
+		}
+		
+		for (int i = 0; i < 4; i++) 
+		{
+			q5_[i] = w6 - q3_[i] - q4_[i];
+
+			q3_[i] = atan2(sin(q3_[i] - dhParams_.theta[2]), cos(q3_[i] - dhParams_.theta[2]));
+			q4_[i] = atan2(sin(q4_[i] - dhParams_.theta[3]), cos(q4_[i] - dhParams_.theta[3]));
+			q5_[i] = atan2(sin(q5_[i] - dhParams_.theta[4]), cos(q5_[i] - dhParams_.theta[4]));
+		}
+		
+
+		number_of_solutions = 4;
 	}
 
 	return number_of_solutions;

@@ -18,7 +18,8 @@ class WPManipulatorDirectKinematics
 
 		WPManipulatorDirectKinematics(void);
 		Eigen::Matrix4d dk_calculate(float q1, float q2, float q3, float q4, float q5);
-		Eigen::Matrix4d dk_2_calculate(float q1, float q2);
+		Eigen::Matrix4d dk_T26_calculate(float q3, float q4, float q5);
+		Eigen::Matrix4d dk_T12_calculate(float q1, float q2);
 		void LoadParameters(std::string file);
 
 	private:

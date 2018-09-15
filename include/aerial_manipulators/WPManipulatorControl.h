@@ -39,6 +39,8 @@ class WPManipulatorControl
 		bool wrench_zero_all_cb(std_srvs::Empty::Request  &req, std_srvs::Empty::Response &res);
 		void wp_manipulator_end_effector_trajectory_cb_ros(const trajectory_msgs::MultiDOFJointTrajectory &msg);
 		int joint12_criterion_function(float *q1_in, float *q2_in, float q1_old, float q2_old, float *q_out, int nbr_of_solutions);
+		int joint26_criterion_function(float *q3_in, float *q4_in, float *q5_in, float q3_old, float q4_old, float q5_old, float *q_out, int nbr_of_solutions);
+		float angle_criterion_function(float *angle, float q3_meas, float q4_meas, float q5_meas);
 		void limitJointsPosition(float *q);
 		void mode_cb_ros(const std_msgs::Int32 &msg);
 		void q1_cb_ros(const std_msgs::Float32 &msg);

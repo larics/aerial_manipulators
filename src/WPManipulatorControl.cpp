@@ -189,17 +189,18 @@ void WPManipulatorControl::start()
 	dynamixel_setpoint.position.push_back(-1.57);
 	dynamixel_setpoint.position.push_back(2.3);
 
-	Eigen::Matrix4d T16_dk, T16_ref;
+	Eigen::Matrix4d T16_dk, T16_ref, T12_dk, T26_ref;
 	Eigen::MatrixXd J, Tau(6,1), dX(6,1), dq(6,1);
 	int nbr_of_solutions;
 
 	float orientationEuler[3], orientationQuaternion[4], Q[5], position[3], q[4];
+	float rot_T26_z[4], feasible_angle;
 
-	while (!start_flag_ && ros::ok()) {
+	/*while (!start_flag_ && ros::ok()) {
 		ros::spinOnce();
 		printf("Waiting for torque measurements.\n");
 		ros::Duration(0.5).sleep();
-	}
+	}*/
 
 
 	while (ros::ok())
@@ -208,7 +209,6 @@ void WPManipulatorControl::start()
 
 		//direct kinematics
 		T16_dk = manipulator_direct.dk_calculate(q1_pos_meas_, q2_pos_meas_, q3_pos_meas_, q4_pos_meas_, q5_pos_meas_);
-
 		Tworld_end_effector_dk = Tworld_uav_origin_ * Tuav_origin_arm_ * T16_dk;
 
 		getAnglesFromRotationTranslationMatrix(Tworld_end_effector_dk, orientationEuler);
@@ -271,7 +271,7 @@ void WPManipulatorControl::start()
 		else if (manipulator_mode_ == 1) //ik mode
 		{
 			T16_ref = Tuav_origin_arm_inv_ * Tuav_origin_world_ * Tworld_wp_end_effector_ref_;
-			nbr_of_solutions = manipulator_inverse.ik2_calculate(T16_ref(1,3), M_PI);
+			nbr_of_solutions = manipulator_inverse.ik_T12_calculate(T16_ref(1,3), M_PI);
 
 			if (joint12_criterion_function(manipulator_inverse.getQ1(), manipulator_inverse.getQ2(), q1_pos_meas_, q2_pos_meas_, Q, nbr_of_solutions))
 			{
@@ -279,9 +279,54 @@ void WPManipulatorControl::start()
 
 				dynamixel_setpoint.position[0] = Q[0];
 				dynamixel_setpoint.position[1] = -Q[1];
-			
-				dynamixel_sepoint_ros_pub_.publish(dynamixel_setpoint);
 			}
+
+			T12_dk = manipulator_direct.dk_T12_calculate(dynamixel_setpoint.position[0], dynamixel_setpoint.position[1]);
+			T26_ref = T12_dk.inverse() * T16_ref;
+
+			std::cout<<T16_ref<<std::endl;
+			std::cout<<T26_ref<<std::endl;
+			std::cout<<T12_dk<<std::endl;
+
+			nbr_of_solutions = manipulator_inverse.getFeasibleRotationT26(T26_ref(0,3), T26_ref(1,3), rot_T26_z);
+
+			if (nbr_of_solutions) 
+			{
+				feasible_angle = angle_criterion_function(rot_T26_z, q3_pos_meas_, q4_pos_meas_, q5_pos_meas_);
+
+				std::cout<<feasible_angle<<std::endl;
+
+				nbr_of_solutions = manipulator_inverse.ik_T26_calculate(T26_ref(0,3), T26_ref(1,3), feasible_angle);
+
+				/*for (int i=0; i <nbr_of_solutions; i++)
+				{
+					std::cout<<manipulator_inverse.getQ3()[i]<<std::endl;
+					std::cout<<manipulator_inverse.getQ4()[i]<<std::endl;
+					std::cout<<manipulator_inverse.getQ5()[i]<<std::endl;
+					std::cout<<""<<std::endl;
+				}*/
+				
+
+				if (joint26_criterion_function(manipulator_inverse.getQ3(), manipulator_inverse.getQ4(), manipulator_inverse.getQ5(), 
+					q3_pos_meas_, q4_pos_meas_, q5_pos_meas_, Q, nbr_of_solutions))
+				{
+					limitJointsPosition(Q);
+					dynamixel_setpoint.position[2] = -Q[0];
+					dynamixel_setpoint.position[3] = Q[1];
+					dynamixel_setpoint.position[4] = -Q[2];
+				}
+
+			}
+
+			std::cout<<"Q1: "<<dynamixel_setpoint.position[0]<<std::endl;
+			std::cout<<"Q2: "<<dynamixel_setpoint.position[1]<<std::endl;
+			std::cout<<"Q3: "<<dynamixel_setpoint.position[2]<<std::endl;
+			std::cout<<"Q4: "<<dynamixel_setpoint.position[3]<<std::endl;
+			std::cout<<"Q5: "<<dynamixel_setpoint.position[4]<<std::endl;
+			std::cout<<""<<std::endl;
+
+			dynamixel_sepoint_ros_pub_.publish(dynamixel_setpoint);
+
 
 			//Eigen::CompleteOrthogonalDecomposition<Eigen::MatrixXd> cqr(J);
 
@@ -686,6 +731,66 @@ int WPManipulatorControl::joint12_criterion_function(float *q1_in, float *q2_in,
 
 		}
 
+	}
+
+	return there_is_solution;
+}
+
+float WPManipulatorControl::angle_criterion_function(float *angle, float q3_meas, float q4_meas, float q5_meas)
+{
+	float angle_meas, middle, return_angle, dist;
+
+	angle_meas = q3_meas + q4_meas + q5_meas;
+	angle_meas = atan2(sin(angle_meas), cos(angle_meas));
+
+	if (angle_meas > angle[0] && angle_meas < angle[1]) return_angle = angle_meas;
+	else if (angle_meas > angle[2] && angle_meas < angle[3]) return_angle = angle_meas;
+
+	dist = abs(angle_meas-angle[0]);
+	return_angle = angle[0];
+
+	if (abs(angle_meas-angle[1]) < dist) return_angle = angle[1];
+	else if (abs(angle_meas-angle[2]) < dist) return_angle = angle[2];
+	else if (abs(angle_meas-angle[3]) < dist) return_angle = angle[3];
+
+	return return_angle;
+}
+
+int WPManipulatorControl::joint26_criterion_function(float *q3_in, float *q4_in, float *q5_in, float q3_old, float q4_old, float q5_old, float *q_out, int nbr_of_solutions)
+{
+	float min_distance = -1, temp;
+	int there_is_solution = 0;
+
+	for (int i = 0; i < nbr_of_solutions; i++)
+	{
+		if (!std::isnan(q3_in[i]) && !std::isnan(q4_in[i]) && !std::isnan(q5_in[i]))
+		{
+			float distance = 0.0;
+
+			temp = fabs(atan2(sin(q3_in[i] - q3_old), cos(q3_in[i] - q3_old)));
+			distance += temp;
+			temp = fabs(atan2(sin(q4_in[i] - q4_old), cos(q4_in[i] - q4_old)));
+			distance += temp;
+			temp = fabs(atan2(sin(q5_in[i] - q5_old), cos(q5_in[i] - q5_old)));
+			distance += temp;
+
+			there_is_solution = 1;
+
+			if (min_distance < 0.0)
+			{
+				min_distance = distance;
+				q_out[0] = q3_in[i];
+				q_out[1] = q4_in[i];
+				q_out[2] = q5_in[i];
+			}
+			else if (distance < min_distance)
+			{
+				min_distance = distance;
+				q_out[0] = q3_in[i];
+				q_out[1] = q4_in[i];
+				q_out[2] = q5_in[i];
+			}
+		}
 	}
 
 	return there_is_solution;
