@@ -1,0 +1,188 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:macro name="cmanip"
+  params="parent *origin">
+
+
+
+    <link name="world"></link>
+
+
+
+    <link name='link1'>
+      <inertial>
+        <mass value="0.1" />
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia
+          ixx="0.01176" ixy="0" ixz="0"
+          iyx="0" iyy="0.01176" iyz="0"
+          izx="0" izy="0" izz="0.0252"/>
+      </inertial>
+
+      <visual>
+        <origin xyz="0 0 0" rpy="${- pi / 2} 0 0" />
+        <geometry>
+          <mesh filename="package://aerial_manipulators/meshes/wp_manipulator/link1.dae"
+            scale="1 1 1" />
+        </geometry>
+      </visual>
+    </link>
+
+
+
+    <link name='link2'>
+      <inertial>
+        <mass value="0.1" />
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia
+          ixx="0.01176" ixy="0" ixz="0"
+          iyx="0" iyy="0.01176" iyz="0"
+          izx="0" izy="0" izz="0.0252"/>
+      </inertial>
+
+      <visual>
+        <origin xyz="0 0 0" rpy="${- pi / 2} ${pi} 0" />
+        <geometry>
+          <mesh filename="package://aerial_manipulators/meshes/wp_manipulator/link2.dae"
+            scale="1 1 1" />
+        </geometry>
+      </visual>
+    </link>
+
+
+
+    <link name='link3'>
+      <inertial>
+        <mass value="0.1" />
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia
+          ixx="0.01176" ixy="0" ixz="0"
+          iyx="0" iyy="0.01176" iyz="0"
+          izx="0" izy="0" izz="0.0252"/>
+      </inertial>
+
+      <visual>
+        <origin xyz="0 0 0" rpy="${pi / 2} 0 0" />
+        <geometry>
+          <mesh filename="package://aerial_manipulators/meshes/wp_manipulator/link3.dae"
+            scale="1 1 1" />
+        </geometry>
+      </visual>
+    </link>
+
+
+    <link name='link4'>
+      <inertial>
+        <mass value="0.1" />
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia
+          ixx="0.01176" ixy="0" ixz="0"
+          iyx="0" iyy="0.01176" iyz="0"
+          izx="0" izy="0" izz="0.0252"/>
+      </inertial>
+
+      <visual>
+        <origin xyz="0 0 0" rpy="${pi / 2} 0 0" />
+        <geometry>
+          <mesh filename="package://aerial_manipulators/meshes/wp_manipulator/link4.dae"
+            scale="1 1 1" />
+        </geometry>
+      </visual>
+    </link>
+
+
+
+    <link name='link5'>
+      <inertial>
+        <mass value="0.1" />
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia
+          ixx="0.01176" ixy="0" ixz="0"
+          iyx="0" iyy="0.01176" iyz="0"
+          izx="0" izy="0" izz="0.0252"/>
+      </inertial>
+
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://aerial_manipulators/meshes/wp_manipulator/link5.dae"
+            scale="1 1 1" />
+        </geometry>
+      </visual>
+    </link>
+
+
+
+    <joint name="link0_to_link1" type="continuous">
+      <parent link="world"/>
+      <child link="link1"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <limit upper="3.14" lower="-3.14" effort="10000000" velocity="20"/>
+      <axis xyz="0 1 0" />
+      <dynamics damping="0.00" friction="0.0"/>
+    </joint>
+
+
+
+    <joint name="link1_to_link2" type="continuous">
+      <parent link="link1"/>
+      <child link="link2"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <limit upper="3.14" lower="-3.14" effort="10000000" velocity="20"/>
+      <axis xyz="0 1 0" />
+      <dynamics damping="0.00" friction="0.0"/>
+    </joint>
+
+
+
+    <joint name="link2_to_link3" type="continuous">
+      <parent link="link2"/>
+      <child link="link3"/>
+      <origin xyz="0 0 0.1365" rpy="0 0 0"/>
+      <limit upper="3.14" lower="-3.14" effort="10000000" velocity="20"/>
+      <axis xyz="1 0 0" />
+      <dynamics damping="0.00" friction="0.0"/>
+    </joint>
+
+
+    <joint name="link3_to_link4" type="continuous">
+      <parent link="link3"/>
+      <child link="link4"/>
+      <origin xyz="0 0 0.075511" rpy="0 0 0"/>
+      <limit upper="3.14" lower="-3.14" effort="10000000" velocity="20"/>
+      <axis xyz="1 0 0" />
+      <dynamics damping="0.00" friction="0.0"/>
+    </joint>
+
+
+
+    <joint name="link4_to_link5" type="continuous">
+      <parent link="link4"/>
+      <child link="link5"/>
+      <origin xyz="0 0 0.072489" rpy="0 0 0"/>
+      <limit upper="3.14" lower="-3.14" effort="10000000" velocity="20"/>
+      <axis xyz="1 0 0" />
+      <dynamics damping="0.00" friction="0.0"/>
+    </joint>
+
+  </xacro:macro>
+
+
+
+  <!-- We add a <transmission> block for every joint that we wish to actuate. -->
+  <xacro:macro name="transmisija" params="trans_number joint_name">
+    <transmission name="transmission_${trans_number}">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${joint_name}">
+        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="motor_${trans_number}">
+        <hardwareInterface>hardware_interface/EffortActuatorInterface</hardwareInterface>
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+  </xacro:macro>
+
+</robot>
