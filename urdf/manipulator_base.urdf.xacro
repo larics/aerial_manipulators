@@ -6,6 +6,21 @@
   params="parent *origin">
 
 
+    <xacro:property name="a1" value="0.122490"/>
+    <xacro:property name="a2" value="0.136500"/>
+    <xacro:property name="a3" value="0.075511"/>
+    <xacro:property name="a4" value="0.072489"/>
+    <xacro:property name="d5" value="0.04526"/>
+    <xacro:property name="theta1" value="${pi/2}"/>
+    <xacro:property name="alpha2" value="-${pi/2}"/>
+
+    <xacro:property name="mass2" value="0.003"/>
+    <xacro:property name="mass1" value="${mass2*a1/a2}"/>
+    <xacro:property name="mass3" value="${mass2*a3/a2}"/>
+    <xacro:property name="mass4" value="${mass2*a4/a2}"/>
+    <xacro:property name="mass5" value="${mass2*d5/a2}"/>
+
+    <xacro:property name="rad" value="0.03"/>
 
     <link name="world"></link>
 
@@ -13,16 +28,16 @@
 
     <link name='link1'>
       <inertial>
-        <mass value="0.1" />
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="${mass1}" />
+        <origin xyz="0 ${a1/2} 0" rpy="0 0 0"/>
         <inertia
-          ixx="0.01176" ixy="0" ixz="0"
-          iyx="0" iyy="0.01176" iyz="0"
-          izx="0" izy="0" izz="0.0252"/>
+          ixx="${1/12 * mass1 * (3*rad*rad + a1*a1)}" ixy="0" ixz="0"
+          iyx="0" iyy="${1/2 * mass1 * rad * rad}" iyz="0"
+          izx="0" izy="0" izz="${1/12 * mass1 * (3*rad*rad + a1*a1)}"/>
       </inertial>
 
       <visual>
-        <origin xyz="0 0 0" rpy="${- pi / 2} 0 0" />
+        <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
           <mesh filename="package://aerial_manipulators/meshes/wp_manipulator/link1.dae"
             scale="1 1 1" />
@@ -34,16 +49,16 @@
 
     <link name='link2'>
       <inertial>
-        <mass value="0.1" />
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="0.03" />
+        <origin xyz="${a2/2} 0 0" rpy="0 0 0"/>
         <inertia
-          ixx="0.01176" ixy="0" ixz="0"
-          iyx="0" iyy="0.01176" iyz="0"
-          izx="0" izy="0" izz="0.0252"/>
+          ixx="${1/2 * mass2 * rad * rad}" ixy="0" ixz="0"
+          iyx="0" iyy="${1/12 * mass2 * (3*rad*rad + a2*a2)}" iyz="0"
+          izx="0" izy="0" izz="${1/12 * mass2 * (3*rad*rad + a2*a2)}"/>
       </inertial>
 
       <visual>
-        <origin xyz="0 0 0" rpy="${- pi / 2} ${pi} 0" />
+        <origin xyz="0 0 0" rpy="0 0 -${pi / 2}" />
         <geometry>
           <mesh filename="package://aerial_manipulators/meshes/wp_manipulator/link2.dae"
             scale="1 1 1" />
@@ -52,19 +67,18 @@
     </link>
 
 
-
     <link name='link3'>
       <inertial>
-        <mass value="0.1" />
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="${mass3}" />
+        <origin xyz="${a3/2} 0 0" rpy="0 0 0"/>
         <inertia
-          ixx="0.01176" ixy="0" ixz="0"
-          iyx="0" iyy="0.01176" iyz="0"
-          izx="0" izy="0" izz="0.0252"/>
+          ixx="${1/2 * mass3 * rad * rad}" ixy="0" ixz="0"
+          iyx="0" iyy="${1/12 * mass3 * (3*rad*rad + a3*a3)}" iyz="0"
+          izx="0" izy="0" izz="${1/12 * mass3 * (3*rad*rad + a3*a3)}"/>
       </inertial>
 
       <visual>
-        <origin xyz="0 0 0" rpy="${pi / 2} 0 0" />
+        <origin xyz="0 0 0" rpy="0 ${pi / 2} -${pi / 2}" />
         <geometry>
           <mesh filename="package://aerial_manipulators/meshes/wp_manipulator/link3.dae"
             scale="1 1 1" />
@@ -73,18 +87,19 @@
     </link>
 
 
+
     <link name='link4'>
       <inertial>
-        <mass value="0.1" />
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="${mass4}" />
+        <origin xyz="${a4/2} 0 0" rpy="0 0 0"/>
         <inertia
-          ixx="0.01176" ixy="0" ixz="0"
-          iyx="0" iyy="0.01176" iyz="0"
-          izx="0" izy="0" izz="0.0252"/>
+          ixx="${1/2 * mass4 * rad * rad}" ixy="0" ixz="0"
+          iyx="0" iyy="${1/12 * mass4 * (3*rad*rad + a4*a4)}" iyz="0"
+          izx="0" izy="0" izz="${1/12 * mass4 * (3*rad*rad + a4*a4)}"/>
       </inertial>
 
       <visual>
-        <origin xyz="0 0 0" rpy="${pi / 2} 0 0" />
+        <origin xyz="0 0 0" rpy="0 ${pi / 2} -${pi / 2}" />
         <geometry>
           <mesh filename="package://aerial_manipulators/meshes/wp_manipulator/link4.dae"
             scale="1 1 1" />
@@ -96,16 +111,16 @@
 
     <link name='link5'>
       <inertial>
-        <mass value="0.1" />
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="${mass5}" />
+        <origin xyz="${d5/2} 0 0" rpy="0 0 0"/>
         <inertia
-          ixx="0.01176" ixy="0" ixz="0"
-          iyx="0" iyy="0.01176" iyz="0"
-          izx="0" izy="0" izz="0.0252"/>
+          ixx="${1/2 * mass5 * rad * rad}" ixy="0" ixz="0"
+          iyx="0" iyy="${1/12 * mass5 * (3*rad*rad + d5*d5)}" iyz="0"
+          izx="0" izy="0" izz="${1/12 * mass5 * (3*rad*rad + d5*d5)}"/>
       </inertial>
 
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="0 0 0" rpy="0 ${pi / 2} 0" />
         <geometry>
           <mesh filename="package://aerial_manipulators/meshes/wp_manipulator/link5.dae"
             scale="1 1 1" />
@@ -118,9 +133,10 @@
     <joint name="link0_to_link1" type="continuous">
       <parent link="world"/>
       <child link="link1"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <!-- Adjust Gazebo coordinate system to link1 coordinate system -->
+      <origin xyz="0 0 0" rpy="${pi/2} 0 ${pi}"/>
       <limit upper="3.14" lower="-3.14" effort="10000000" velocity="20"/>
-      <axis xyz="0 1 0" />
+      <axis xyz="0 0 1" />
       <dynamics damping="0.00" friction="0.0"/>
     </joint>
 
@@ -129,9 +145,9 @@
     <joint name="link1_to_link2" type="continuous">
       <parent link="link1"/>
       <child link="link2"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="0 ${a1} 0" rpy="0 0 ${theta1}"/>
       <limit upper="3.14" lower="-3.14" effort="10000000" velocity="20"/>
-      <axis xyz="0 1 0" />
+      <axis xyz="0 0 1" />
       <dynamics damping="0.00" friction="0.0"/>
     </joint>
 
@@ -140,9 +156,9 @@
     <joint name="link2_to_link3" type="continuous">
       <parent link="link2"/>
       <child link="link3"/>
-      <origin xyz="0 0 0.1365" rpy="0 0 0"/>
+      <origin xyz="${a2} 0 0" rpy="${alpha2} 0 0"/>
       <limit upper="3.14" lower="-3.14" effort="10000000" velocity="20"/>
-      <axis xyz="1 0 0" />
+      <axis xyz="0 0 1" />
       <dynamics damping="0.00" friction="0.0"/>
     </joint>
 
@@ -150,9 +166,9 @@
     <joint name="link3_to_link4" type="continuous">
       <parent link="link3"/>
       <child link="link4"/>
-      <origin xyz="0 0 0.075511" rpy="0 0 0"/>
+      <origin xyz="${a3} 0 0" rpy="0 0 0"/>
       <limit upper="3.14" lower="-3.14" effort="10000000" velocity="20"/>
-      <axis xyz="1 0 0" />
+      <axis xyz="0 0 1" />
       <dynamics damping="0.00" friction="0.0"/>
     </joint>
 
@@ -161,9 +177,9 @@
     <joint name="link4_to_link5" type="continuous">
       <parent link="link4"/>
       <child link="link5"/>
-      <origin xyz="0 0 0.072489" rpy="0 0 0"/>
+      <origin xyz="${a4} 0 0" rpy="0 0 0"/>
       <limit upper="3.14" lower="-3.14" effort="10000000" velocity="20"/>
-      <axis xyz="1 0 0" />
+      <axis xyz="0 0 1" />
       <dynamics damping="0.00" friction="0.0"/>
     </joint>
 
