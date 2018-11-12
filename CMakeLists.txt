@@ -16,6 +16,10 @@ add_definitions(-std=c++11)
 find_package(cmake_modules REQUIRED)
 find_package(Eigen 3 REQUIRED)
 
+generate_dynamic_reconfigure_options(
+    config/JointCtlParams.cfg
+    )
+
 catkin_package(
    INCLUDE_DIRS include
    CATKIN_DEPENDS roscpp rospy roslib rospack
@@ -25,6 +29,12 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
 )
+
+add_library(pid src/PID.cpp)
+target_link_libraries(pid ${catkin_LIBRARIES})
+
+add_executable(joint_position_control src/joint_position_control.cpp)
+target_link_libraries(joint_position_control pid ${catkin_LIBRARIES} yaml-cpp)
 
 #add_library(WPManipulatorDirectKinematics src/WPManipulatorDirectKinematics.cpp)
 #target_link_libraries(WPManipulatorDirectKinematics ${catkin_LIBRARIES} yaml-cpp)
