@@ -68,7 +68,7 @@ void JointControl::configCallback(aerial_manipulators::JointCtlParamsConfig &con
     if (!config_start_)
     {
         // callback is called for the first time. Use this to set the new params to the config server
-        
+
         config.kp = joint_pid_.get_kp();
         config.ki = joint_pid_.get_ki();
         config.kd = joint_pid_.get_kd();
@@ -80,8 +80,8 @@ void JointControl::configCallback(aerial_manipulators::JointCtlParamsConfig &con
     else
     {
         // The following code just sets up the P,I,D gains for all controllers
-        
-        joint_pid_.set_kp(config.kp);
+
+				joint_pid_.set_kp(config.kp);
         joint_pid_.set_ki(config.ki);
         joint_pid_.set_kd(config.kd);
     }
@@ -179,13 +179,13 @@ void JointPositionControl::run(void)
         		{
         			position_error = joint_control_[i].get_ref() - joint_meas_[i];
 
-        			if (fabs(position_error) > M_PI) 
+        			if (fabs(position_error) > M_PI)
         			{
                 		if (position_error > 0)
                 		{
                     		position_error = position_error - 2 * M_PI;
                 		}
-                		else 
+                		else
                 		{
                     		position_error = position_error + 2 * M_PI;
                 		}
@@ -224,11 +224,11 @@ int main(int argc, char **argv)
 	}
 
 	std::vector<std::string> controllers;
-	for (i = 1; i < argc; i++) 
+	for (i = 1; i < argc; i++)
 	{
 		if (std::string(argv[i]).compare(std::string("param_file")) == 0) break;
 		controllers.push_back(std::string(argv[i]));
-	} 
+	}
 
 	private_node_handle_.param("param_file", controller_params_file, std::string("/config/dual_arm_manipulator_position_control.yaml"));
 
