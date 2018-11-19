@@ -3,6 +3,7 @@
 <launch>
 
   <!-- these are the arguments you can pass this launch file, for example paused:=true -->
+  <arg name="namespace" default="cmanip"/>
   <arg name="paused" default="false"/>
   <arg name="use_sim_time" default="true"/>
   <arg name="gui" default="true"/>
@@ -30,8 +31,8 @@
   <!-- Start camera manipulator PID control -->
   <include file="$(find aerial_manipulators)/launch/cmanip_control.launch"/>
 
-  <node name="joint_position_control" pkg="aerial_manipulators" type="joint_position_control" output="screen"  args="joint1_position_controller joint2_position_controller joint3_position_controller joint4_position_controller joint5_position_controller">
-  <param name="param_file" value="$(find aerial_manipulators)/config/cmanip_position_control.yaml"/>
+  <node name="joint_position_control" pkg="aerial_manipulators" type="joint_position_control" output="screen"  ns="$(arg namespace)" args="joint1_position_controller joint2_position_controller joint3_position_controller joint4_position_controller joint5_position_controller">
+    <param name="param_file" value="$(find aerial_manipulators)/config/cmanip_position_control.yaml"/>
   </node>
 
 </launch>

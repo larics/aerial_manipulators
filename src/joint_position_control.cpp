@@ -128,6 +128,7 @@ void JointPositionControl::clock_cb(const rosgraph_msgs::Clock &msg)
 void JointPositionControl::LoadParameters(std::string file, std::vector<std::string> &controllers)
 {
 	int i;
+	std::cout<<file<<std::endl;
 	YAML::Node config = YAML::LoadFile(file);
 	joint_control_ = new JointControl[controllers.size()];
 	std::string pub_topic;
@@ -230,10 +231,10 @@ int main(int argc, char **argv)
 		controllers.push_back(std::string(argv[i]));
 	}
 
-	private_node_handle_.param("param_file", controller_params_file, std::string("/config/dual_arm_manipulator_position_control.yaml"));
+	private_node_handle_.param("param_file", controller_params_file, path+std::string("/config/dual_arm_manipulator_position_control.yaml"));
 
 	JointPositionControl joint_control;
-	joint_control.LoadParameters(path+controller_params_file, controllers);
+	joint_control.LoadParameters(controller_params_file, controllers);
 	joint_control.run();
 
 	return 0;
