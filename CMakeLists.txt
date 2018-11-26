@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
     std_msgs
     dynamic_reconfigure
     dynamixel_workbench_msgs
+    uav_ros_control
 )
 
 add_definitions(-std=c++11)
@@ -30,11 +31,12 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_library(pid src/PID.cpp)
-target_link_libraries(pid ${catkin_LIBRARIES})
+# PID library is already built
+#add_library(pid src/PID.cpp)
+#target_link_libraries(pid ${catkin_LIBRARIES})
 
 add_executable(joint_position_control src/joint_position_control.cpp)
-target_link_libraries(joint_position_control pid ${catkin_LIBRARIES} yaml-cpp)
+target_link_libraries(joint_position_control ${catkin_LIBRARIES} yaml-cpp)
 
 #add_library(WPManipulatorDirectKinematics src/WPManipulatorDirectKinematics.cpp)
 #target_link_libraries(WPManipulatorDirectKinematics ${catkin_LIBRARIES} yaml-cpp)

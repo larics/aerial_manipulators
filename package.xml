@@ -24,6 +24,8 @@
   <build_depend>yaml-cpp</build_depend>
   <build_depend>rospack</build_depend>
   <build_depend>dynamixel_workbench_msgs</build_depend>
+  <build_depend>uav_ros_control_msgs</build_depend>
+  <build_depend>uav_ros_control</build_depend>
 
   <run_depend>cmake_modules</run_depend>
   <run_depend>message_runtime</run_depend>
