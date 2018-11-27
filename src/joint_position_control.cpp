@@ -128,7 +128,7 @@ void JointPositionControl::clock_cb(const rosgraph_msgs::Clock &msg)
 void JointPositionControl::LoadParameters(std::string file, std::vector<std::string> &controllers)
 {
 	int i;
-	std::cout<<file<<std::endl;
+	std::cout<< "*** Position parameter file: " << file <<std::endl;
 	YAML::Node config = YAML::LoadFile(file);
 	joint_control_ = new JointControl[controllers.size()];
 	std::string pub_topic;
@@ -180,11 +180,7 @@ void JointPositionControl::run(void)
         	{
         		for (i = 0; i < joint_name_.size(); i++)
         		{
-        			position_error = (joint_control_[i].get_ref() - joint_meas_[i]);
-        			if (i == 0 || i == 1)
-        			{
-        				position_error = - position_error;
-        			}
+        			position_error = joint_control_[i].get_ref() - joint_meas_[i];
 
         			if (fabs(position_error) > M_PI)
         			{
