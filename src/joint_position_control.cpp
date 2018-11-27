@@ -81,7 +81,7 @@ void JointControl::configCallback(aerial_manipulators::JointCtlParamsConfig &con
     {
         // The following code just sets up the P,I,D gains for all controllers
 
-				joint_pid_.set_kp(config.kp);
+		joint_pid_.set_kp(config.kp);
         joint_pid_.set_ki(config.ki);
         joint_pid_.set_kd(config.kd);
     }
@@ -147,7 +147,9 @@ void JointPositionControl::LoadParameters(std::string file, std::vector<std::str
 		joint_control_[i].set_lim_high(config[controllers[i]]["pid"]["high_limit"].as<double>());
 		joint_control_[i].set_lim_low(config[controllers[i]]["pid"]["low_limit"].as<double>());
 		joint_meas_.push_back(0.0);
-		joint_ref_ros_sub_.push_back(n_.subscribe(controllers[i] + "/command", 1, &JointControl::joint_ref_cb_ros, &joint_control_[i]));
+		joint_ref_ros_sub_.push_back(n_.subscribe(
+			controllers[i] + "/command", 1, 
+			&JointControl::joint_ref_cb_ros, &joint_control_[i]));
 		joint_control_[i].setReconfigure(ros::NodeHandle("~/"+controllers[i]));
 	}
 
@@ -178,7 +180,11 @@ void JointPositionControl::run(void)
         	{
         		for (i = 0; i < joint_name_.size(); i++)
         		{
-        			position_error = joint_control_[i].get_ref() - joint_meas_[i];
+        			position_error = (joint_control_[i].get_ref() - joint_meas_[i]);
+        			if (i == 0 || i == 1)
+        			{
+        				position_error = - position_error;
+        			}
 
         			if (fabs(position_error) > M_PI)
         			{
@@ -194,7 +200,6 @@ void JointPositionControl::run(void)
             		joint_meas_[i] = joint_control_[i].get_ref() - position_error;
 
         			velocity_ref.data = joint_control_[i].compute(joint_control_[i].get_ref(), joint_meas_[i], dt);
-
             		joint_command_pub_ros_[i].publish(velocity_ref);
         		}
         	}

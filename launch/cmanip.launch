@@ -32,7 +32,8 @@
   <include file="$(find aerial_manipulators)/launch/cmanip_control.launch"/>
 
   <node 
-      name="joint_position_control" pkg="aerial_manipulators" type="joint_position_control" output="screen"  ns="$(arg namespace)" 
+      name="joint_position_control" pkg="aerial_manipulators" 
+      type="joint_position_control" output="screen"  ns="$(arg namespace)" 
       args="joint1_position_controller 
             joint2_position_controller 
             joint3_position_controller 
