@@ -166,7 +166,6 @@ void JointPositionControl::run(void)
 	std_msgs::Float64 velocity_ref;
 
 	clock_old = clock_;
-
 	while(ros::ok())
 	{
 		ros::spinOnce();
@@ -196,6 +195,16 @@ void JointPositionControl::run(void)
             		joint_meas_[i] = joint_control_[i].get_ref() - position_error;
 
         			velocity_ref.data = joint_control_[i].compute(joint_control_[i].get_ref(), joint_meas_[i], dt);
+
+        			/*
+					std::cout << "Joint: " << i << std::endl;
+					std::cout << "Measured value: " << joint_meas_[i] << std::endl;
+					std::cout << "Setpoint: " << joint_control_[i].get_ref() << std::endl;
+					std::cout << "Position error: " << position_error << std::endl;
+					std::cout << "Command value: " << velocity_ref.data << std::endl;
+					std::cout << std::endl << std::endl;
+        			*/
+
             		joint_command_pub_ros_[i].publish(velocity_ref);
         		}
         	}
