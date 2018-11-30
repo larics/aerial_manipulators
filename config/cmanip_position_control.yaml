@@ -19,4 +19,4 @@ joint4_position_controller:
 joint5_position_controller:
   command_topic: joint5_velocity_controller/command
   joint: link4_to_link5
-  pid: {p: 5.25, i: 0.35, d: 0.75, high_limit: 0.5, low_limit: -0.5}
+  pid: {p: 2.35, i: 0.035, d: 0.0, high_limit: 0.75, low_limit: -0.75}

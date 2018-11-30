@@ -196,10 +196,7 @@ void JointPositionControl::run(void)
                 		}
             		}
             		joint_meas_[i] = joint_control_[i].get_ref() - position_error;
-
-            		double temp_control = joint_control_[i].compute(joint_control_[i].get_ref(), joint_meas_[i], dt);
-            		velocity_ref.data = previous_command_[i] + 0.1 * (temp_control - previous_command_[i]);
-            		previous_command_[i] = (double)velocity_ref.data;
+            		velocity_ref.data = joint_control_[i].compute(joint_control_[i].get_ref(), joint_meas_[i], dt);
 
         			/*
 					std::cout << "Joint: " << i << std::endl;

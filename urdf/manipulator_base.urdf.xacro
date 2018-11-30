@@ -178,7 +178,7 @@
       <origin xyz="${a4} 0 0" rpy="0 0 0"/>
       <limit upper="2.355" lower="-2.355" effort="1.62" velocity="11.9"/>
       <axis xyz="0 0 1" />
-      <dynamics friction="0.13"/>
+      <dynamics friction="0.05"/>
     </joint>
 
   </xacro:macro>

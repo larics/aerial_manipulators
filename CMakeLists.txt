@@ -26,6 +26,8 @@ catkin_package(
    CATKIN_DEPENDS roscpp rospy roslib rospack
 )
 
+MESSAGE(WARNING ${catkin_INCLUDE_DIRS})
+
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
