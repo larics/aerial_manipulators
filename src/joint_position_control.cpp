@@ -1,6 +1,7 @@
 #include <aerial_manipulators/joint_position_control.h>
 #include "yaml-cpp/yaml.h"
 #include <ros/package.h>
+#include <uav_ros_control/NonlinearFilters.h>
 
 JointControl::JointControl()
 {
@@ -151,6 +152,8 @@ void JointPositionControl::LoadParameters(std::string file, std::vector<std::str
 			controllers[i] + "/command", 1, 
 			&JointControl::joint_ref_cb_ros, &joint_control_[i]));
 		joint_control_[i].setReconfigure(ros::NodeHandle("~/"+controllers[i]));
+
+		previous_command_.push_back(0.0);
 	}
 
 	is_init_ = true;
@@ -194,7 +197,9 @@ void JointPositionControl::run(void)
             		}
             		joint_meas_[i] = joint_control_[i].get_ref() - position_error;
 
-        			velocity_ref.data = joint_control_[i].compute(joint_control_[i].get_ref(), joint_meas_[i], dt);
+            		double temp_control = joint_control_[i].compute(joint_control_[i].get_ref(), joint_meas_[i], dt);
+            		velocity_ref.data = previous_command_[i] + 0.1 * (temp_control - previous_command_[i]);
+            		previous_command_[i] = (double)velocity_ref.data;
 
         			/*
 					std::cout << "Joint: " << i << std::endl;

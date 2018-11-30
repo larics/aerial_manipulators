@@ -135,9 +135,9 @@
       <child link="link1"/>
       <!-- Adjust Gazebo coordinate system to link1 coordinate system -->
       <origin xyz="0 0 0" rpy="${pi/2} 0 ${pi}"/>
-      <limit upper="0" lower="0" effort="10000000" velocity="20"/>
+      <limit upper="0" lower="0" effort="1.62" velocity="11.9"/>
       <axis xyz="0 0 1" />
-      <dynamics damping="0.07" friction="0.01"/>
+      <dynamics friction="0.13"/>
     </joint>
 
 
@@ -145,9 +145,9 @@
       <parent link="link1"/>
       <child link="link2"/>
       <origin xyz="0 ${a1} 0" rpy="0 0 ${theta1}"/>
-      <limit upper="0" lower="0" effort="10000000" velocity="20"/>
+      <limit upper="0" lower="0" effort="1.62" velocity="11.9"/>
       <axis xyz="0 0 1" />
-      <dynamics damping="0.07" friction="0.01"/>
+      <dynamics friction="0.13"/>
     </joint>
 
 
@@ -156,9 +156,9 @@
       <parent link="link2"/>
       <child link="link3"/>
       <origin xyz="${a2} 0 0" rpy="${alpha2} 0 0"/>
-      <limit upper="0" lower="0" effort="10000000" velocity="20"/>
+      <limit upper="0.0" lower="0.0" effort="1.62" velocity="11.9"/>
       <axis xyz="0 0 1" />
-      <dynamics damping="0.07" friction="0.01"/>
+      <dynamics friction="0.13"/>
     </joint>
 
 
@@ -166,9 +166,9 @@
       <parent link="link3"/>
       <child link="link4"/>
       <origin xyz="${a3} 0 0" rpy="0 0 0"/>
-      <limit upper="2.355" lower="-2.355" effort="10000000" velocity="20"/>
+      <limit upper="0.0" lower="0.0" effort="1.62" velocity="11.9"/>
       <axis xyz="0 0 1" />
-      <dynamics damping="0.07" friction="0.01"/>
+      <dynamics friction="0.13"/>
     </joint>
 
 
@@ -176,9 +176,9 @@
       <parent link="link4"/>
       <child link="link5"/>
       <origin xyz="${a4} 0 0" rpy="0 0 0"/>
-      <limit upper="2.355" lower="-2.355" effort="10000000" velocity="20"/>
+      <limit upper="2.355" lower="-2.355" effort="1.62" velocity="11.9"/>
       <axis xyz="0 0 1" />
-      <dynamics damping="0.07" friction="0.01"/>
+      <dynamics friction="0.13"/>
     </joint>
 
   </xacro:macro>

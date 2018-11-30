@@ -51,6 +51,7 @@ class JointPositionControl{
 		std::vector<std::string> joint_name_;
 		std::vector<double> joint_meas_;
 		JointControl* joint_control_;
+		std::vector<double> previous_command_;
 		ros::NodeHandle n_;
 
 	public:

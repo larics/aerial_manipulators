@@ -11,12 +11,12 @@ joint2_position_controller:
 joint3_position_controller:
   command_topic: joint3_velocity_controller/command
   joint: link2_to_link3
-  pid: {p: 0.0, i: 0.0, d: 0.0, high_limit: 6, low_limit: -6}
+  pid: {p: 0.0, i: 0.0, d: 0.0, high_limit: 0.75, low_limit: -0.75}
 joint4_position_controller:
   command_topic: joint4_velocity_controller/command
   joint: link3_to_link4
-  pid: {p: 45.0, i: 6.5, d: 0.0, high_limit: 0.5, low_limit: -0.5}
+  pid: {p: 0.0, i: 0.0, d: 0.0, high_limit: 0.5, low_limit: -0.5}
 joint5_position_controller:
   command_topic: joint5_velocity_controller/command
   joint: link4_to_link5
-  pid: {p: 0.0, i: 0.0, d: 0.0, high_limit: 0.0, low_limit: -0.0}
+  pid: {p: 5.25, i: 0.35, d: 0.75, high_limit: 0.5, low_limit: -0.5}
