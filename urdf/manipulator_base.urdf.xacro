@@ -137,7 +137,7 @@
       <origin xyz="0 0 0" rpy="${pi/2} 0 ${pi}"/>
       <limit upper="0" lower="0" effort="1.62" velocity="11.9"/>
       <axis xyz="0 0 1" />
-      <dynamics friction="0.13"/>
+      <dynamics friction="0.0" damping="0.0"/>
     </joint>
 
 
@@ -147,7 +147,7 @@
       <origin xyz="0 ${a1} 0" rpy="0 0 ${theta1}"/>
       <limit upper="0" lower="0" effort="1.62" velocity="11.9"/>
       <axis xyz="0 0 1" />
-      <dynamics friction="0.13"/>
+      <dynamics friction="0.0" damping="0.0"/>
     </joint>
 
 
@@ -158,7 +158,7 @@
       <origin xyz="${a2} 0 0" rpy="${alpha2} 0 0"/>
       <limit upper="0.0" lower="0.0" effort="1.62" velocity="11.9"/>
       <axis xyz="0 0 1" />
-      <dynamics friction="0.13"/>
+      <dynamics friction="0.0" damping="0.0"/>
     </joint>
 
 
@@ -168,7 +168,7 @@
       <origin xyz="${a3} 0 0" rpy="0 0 0"/>
       <limit upper="0.0" lower="0.0" effort="3.1" velocity="11.9"/>
       <axis xyz="0 0 1" />
-      <dynamics friction="0.05"/>
+      <dynamics friction="0.0" damping="0.0"/>
     </joint>
 
 
@@ -176,9 +176,9 @@
       <parent link="link4"/>
       <child link="link5"/>
       <origin xyz="${a4} 0 0" rpy="0 0 0"/>
-      <limit upper="2.355" lower="-2.355" effort="3.1" velocity="11.9"/>
+      <limit upper="2.355" lower="-2.355" effort="6" velocity="11.9"/>
       <axis xyz="0 0 1" />
-      <dynamics friction="0.05"/>
+      <dynamics friction="0.0" damping="0.0"/>
     </joint>
 
   </xacro:macro>
