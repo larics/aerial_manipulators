@@ -129,15 +129,34 @@
     </link>
 
 
+    <link name="endEffector">
+      <inertial>
+        <mass value="0.00001" />
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia
+          ixx="0.00001" ixy="0" ixz="0"
+          iyx="0" iyy="0.00001" iyz="0"
+          izx="0" izy="0" izz="0.00001"/>
+      </inertial>
+
+      <visual>
+        <geometry>
+          <sphere radius="0.005"/>
+        </geometry>
+      </visual>
+    </link>
+
+
+
+
 
     <joint name="link0_to_link1" type="revolute">
       <parent link="world"/>
       <child link="link1"/>
       <!-- Adjust Gazebo coordinate system to link1 coordinate system -->
       <origin xyz="0 0 0" rpy="${pi/2} 0 ${pi}"/>
-      <limit upper="0" lower="0" effort="10000000" velocity="20"/>
+      <limit upper="1.57" lower="-1.57" effort="10000000" velocity="20"/>
       <axis xyz="0 0 1" />
-      <dynamics damping="0.07" friction="0.01"/>
     </joint>
 
 
@@ -146,9 +165,8 @@
       <parent link="link1"/>
       <child link="link2"/>
       <origin xyz="0 ${a1} 0" rpy="0 0 ${theta1}"/>
-      <limit upper="0" lower="0" effort="10000000" velocity="20"/>
+      <limit upper="2.2" lower="-2.2" effort="10000000" velocity="20"/>
       <axis xyz="0 0 1" />
-      <dynamics damping="0.07" friction="0.01"/>
     </joint>
 
 
@@ -157,9 +175,8 @@
       <parent link="link2"/>
       <child link="link3"/>
       <origin xyz="${a2} 0 0" rpy="${alpha2} 0 0"/>
-      <limit upper="0" lower="0" effort="10000000" velocity="20"/>
+      <limit upper="1.57" lower="-1.57" effort="10000000" velocity="20"/>
       <axis xyz="0 0 1" />
-      <dynamics damping="0.07" friction="0.01"/>
     </joint>
 
 
@@ -167,20 +184,28 @@
       <parent link="link3"/>
       <child link="link4"/>
       <origin xyz="${a3} 0 0" rpy="0 0 0"/>
-      <limit upper="0" lower="0" effort="10000000" velocity="20"/>
+      <limit upper="1.57" lower="-1.57" effort="10000000" velocity="20"/>
       <axis xyz="0 0 1" />
     </joint>
 <!-- <limit upper="1.57" lower="-1.57" effort="10000000" velocity="20"/> -->
 
 
-    <joint name="link4_to_link5" type="continuous">
+    <joint name="link4_to_link5" type="revolute">
       <parent link="link4"/>
       <child link="link5"/>
       <origin xyz="${a4} 0 0" rpy="0 0 0"/>
-      <limit upper="3.14" lower="-3.14" effort="10000000" velocity="20"/>
+      <limit upper="2.3" lower="-2.3" effort="10000000" velocity="20"/>
       <axis xyz="0 0 1" />
     </joint>
 <!--       <limit upper="2.3" lower="-2.3" effort="10000000" velocity="20"/> -->
+
+    <joint name="link5_to_ef" type="revolute">
+      <parent link="link5"/>
+      <child link="endEffector"/>
+      <origin xyz="${d5} 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
+      <limit upper="0" lower="0" effort="10000000" velocity="20"/>
+      <axis xyz="0 0 1" />
+    </joint>
 
   </xacro:macro>
 
