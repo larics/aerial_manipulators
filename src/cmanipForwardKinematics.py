@@ -69,14 +69,16 @@ class CManip:
                 T12 = spin_transform(q2+self.theta0[2], self.d[2], self.alpha[2], self.a[2])
                 T23 = spin_transform(q3+self.theta0[3], self.d[3], self.alpha[3], self.a[3])
                 T34 = spin_transform(q4+self.theta0[4], self.d[4], self.alpha[4], self.a[4])
-                T4H = spin_transform(self.theta0[5], self.d[5], self.alpha[5], self.a[5])
-                TH5 = spin_transform(q5+self.theta0[6], self.d[6], self.alpha[6], self.a[6])
+                T4H = spin_transform(q5+self.theta0[5], self.d[5], self.alpha[5], self.a[5])
+                TH5 = spin_transform(self.theta0[6], self.d[6], self.alpha[6], self.a[6])
 
                 TW5 = world2tool(TW0, T01, T12, T23, T34, T4H, TH5)
 
                 self.check.x = TW5[0,3] - self.poseEnd.pose[6].position.x
                 self.check.y = TW5[1,3] - self.poseEnd.pose[6].position.y
                 self.check.z = TW5[2,3] - self.poseEnd.pose[6].position.z
+
+                print(TW5)
 
                 self.pub1.publish(self.check)
 
