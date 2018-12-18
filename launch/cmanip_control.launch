@@ -24,7 +24,7 @@
     <remap from="/robot_description" to="$(arg namespace)/robot_description"/>
   </node>
 
-  <node name="cmanipKinematic" pkg="aerial_manipulators" type="cmanipForwardKinematics.py" output="screen"  ns="$(arg namespace)">
+  <node name="cmanipForwardKinematic" pkg="aerial_manipulators" type="cmanipForwardKinematics.py" output="screen"  ns="$(arg namespace)">
   </node>
 
 </launch>
