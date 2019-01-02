@@ -19,7 +19,7 @@
     joint_name="link1_to_link2">
   </xacro:transmisija>
 
-  <xacro:transmisija
+  <!-- xacro:transmisija
     trans_number="3"
     joint_name="link2_to_link3">
   </xacro:transmisija>
@@ -32,6 +32,6 @@
   <xacro:transmisija
     trans_number="5"
     joint_name="link4_to_link5">
-  </xacro:transmisija>
+  </xacro:transmisija -->
 
 </robot>
