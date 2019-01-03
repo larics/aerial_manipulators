@@ -36,7 +36,8 @@
       type="joint_position_control" output="screen"  ns="$(arg namespace)" 
       args="joint1_position_controller 
       		joint2_position_controller 
-      		joint3_position_controller">
+      		joint3_position_controller
+      		joint4_position_controller">
     <param name="param_file" value="$(find aerial_manipulators)/config/cmanip_position_control.yaml"/>
   </node>
 
