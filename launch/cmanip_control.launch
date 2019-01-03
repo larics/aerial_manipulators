@@ -10,7 +10,8 @@
     output="screen" ns="$(arg namespace)"  args="
 			joint_state_controller 
 			joint1_velocity_controller 
-			joint2_velocity_controller">
+			joint2_velocity_controller 
+			joint3_velocity_controller">
     <remap from="/robot_description" to="$(arg namespace)/robot_description"/>
   </node>
 

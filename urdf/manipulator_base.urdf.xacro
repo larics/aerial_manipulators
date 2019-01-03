@@ -67,7 +67,7 @@
     </link>
 
 
-    <!-- link name='link3'>
+    <link name='link3'>
       <inertial>
         <mass value="${mass3}" />
         <origin xyz="${a3/2} 0 0" rpy="0 0 0"/>
@@ -88,7 +88,7 @@
 
 
 
-    <link name='link4'>
+    <!-- link name='link4'>
       <inertial>
         <mass value="${mass4}" />
         <origin xyz="${a4/2} 0 0" rpy="0 0 0"/>
@@ -152,17 +152,17 @@
 
 
 
-    <!-- joint name="link2_to_link3" type="revolute">
+    <joint name="link2_to_link3" type="revolute">
       <parent link="link2"/>
       <child link="link3"/>
       <origin xyz="${a2} 0 0" rpy="${alpha2} 0 0"/>
-      <limit upper="0.0" lower="0.0" effort="1.62" velocity="11.9"/>
+      <limit upper="2" lower="-2" effort="1.62" velocity="11.9"/>
       <axis xyz="0 0 1" />
       <dynamics friction="0.0" damping="0.0"/>
     </joint>
 
 
-    <joint name="link3_to_link4" type="revolute">
+    <!--joint name="link3_to_link4" type="revolute">
       <parent link="link3"/>
       <child link="link4"/>
       <origin xyz="${a3} 0 0" rpy="0 0 0"/>
