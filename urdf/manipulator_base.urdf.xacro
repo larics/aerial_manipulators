@@ -166,7 +166,7 @@
       <parent link="link3"/>
       <child link="link4"/>
       <origin xyz="${a3} 0 0" rpy="0 0 0"/>
-      <limit upper="2" lower="-2" effort="3.1" velocity="11.9"/>
+      <limit upper="2" lower="-2" effort="1.62" velocity="11.9"/>
       <axis xyz="0 0 1" />
       <dynamics friction="0.0" damping="0.0"/>
     </joint>
