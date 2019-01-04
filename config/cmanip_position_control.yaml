@@ -15,7 +15,7 @@ joint3_position_controller:
 joint4_position_controller:
   command_topic: joint4_velocity_controller/command
   joint: link3_to_link4
-  pid: {p: 5.0, i: 0.0, d: 1.0, high_limit: 6, low_limit: -6}
+  pid: {p: 1.0, i: 0.0, d: 0.0, high_limit: 6, low_limit: -6}
 joint5_position_controller:
   command_topic: joint5_velocity_controller/command
   joint: link4_to_link5
