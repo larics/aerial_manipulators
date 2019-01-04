@@ -7,7 +7,7 @@ joint1_position_controller:
 joint2_position_controller:
   command_topic: joint2_velocity_controller/command
   joint: link1_to_link2
-  pid: {p: 3.0, i: 0.0, d: 0.5, high_limit: 6, low_limit: -6}
+  pid: {p: 3.0, i: 0.0, d: 1, high_limit: 6, low_limit: -6}
 joint3_position_controller:
   command_topic: joint3_velocity_controller/command
   joint: link2_to_link3
