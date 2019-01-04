@@ -12,7 +12,8 @@
 			joint1_velocity_controller 
 			joint2_velocity_controller 
 			joint3_velocity_controller
-			joint4_velocity_controller">
+			joint4_velocity_controller 
+			joint5_velocity_controller">
     <remap from="/robot_description" to="$(arg namespace)/robot_description"/>
   </node>
 
