@@ -80,29 +80,30 @@ class CManip:
     def run(self):
 
         while not rospy.is_shutdown():
+            theta = [1.570796327, 0.0, 0.0, 0.0, 4.71238898, 0]
+            print Jacobian(theta)
+            #t.sleep(0.1)
 
-            t.sleep(0.1)
+            #position1 = np.array([self.posOrt.linear.x, self.posOrt.linear.y, self.posOrt.linear.z, self.posOrt.angular.x, self.posOrt.angular.y, self.posOrt.angular.z]).transpose()
 
-            position1 = np.array([self.posOrt.linear.x, self.posOrt.linear.y, self.posOrt.linear.z, self.posOrt.angular.x, self.posOrt.angular.y, self.posOrt.angular.z]).transpose()
-
-            if (not self.isGivenFirst):
-                if (position1[0] != 0 or position1[1] != 0 or position1[2] != 0 or position1[3] != 0 or position1[4] != 0):
-                    self.isGivenFirst = True
-                else:
-                    position1 = np.array([0, 0, 0.45225, 0, 0, 1]).transpose()
+            #if (not self.isGivenFirst):
+            #    if (position1[0] != 0 or position1[1] != 0 or position1[2] != 0 or position1[3] != 0 or position1[4] != 0):
+            #        self.isGivenFirst = True
+            #    else:
+            #        position1 = np.array([0, 0, 0.45225, 0, 0, 1]).transpose()
 
 
-            theta1 = np.dot(np.linalg.pinv(Jacobian(self.theta0)), (position1 - self.position0)) + self.theta0
+            #theta1 = np.dot(np.linalg.pinv(Jacobian(self.theta0)), (position1 - self.position0)) + self.theta0
 
-            self.pub1.publish(theta1[0,0])
-            self.pub2.publish(theta1[0,1])
-            self.pub3.publish(theta1[0,2])
-            self.pub4.publish(theta1[0,3])
-            self.pub5.publish(theta1[0,4])
+            #self.pub1.publish(theta1[0,0])
+            #self.pub2.publish(theta1[0,1])
+            #self.pub3.publish(theta1[0,2])
+            #self.pub4.publish(theta1[0,3])
+            #self.pub5.publish(theta1[0,4])
 
-            for i in range(0,5):
-                self.theta0[i] = theta1[0,i]
-            self.position0 = position1
+            #for i in range(0,5):
+            #    self.theta0[i] = theta1[0,i]
+            #self.position0 = position1
 
 if __name__ == '__main__':
     rospy.init_node('CManip')

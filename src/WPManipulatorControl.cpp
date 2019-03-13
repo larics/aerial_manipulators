@@ -2,46 +2,28 @@
 #include "geometry_msgs/WrenchStamped.h"
 
 WPManipulatorControl::WPManipulatorControl():
-	q1_torque_meas_(0),
-	q2_torque_meas_(0),
-	q3_torque_meas_(0),
-	q4_torque_meas_(0),
-	q5_torque_meas_(0),
-	q1_pos_meas_(0),
-	q2_pos_meas_(0),
-	q3_pos_meas_(0),
-	q4_pos_meas_(0),
-	q5_pos_meas_(0), 
 	start_flag_(false),
 	manipulator_mode_(0),
-	q1_setpoint_(1.57),
-	q2_setpoint_(-0.4),
-	q3_setpoint_(1.57),
-	q4_setpoint_(-1.57),
-	q5_setpoint_(2.3),
 	new_trajectory_(false),
 	trajectory_length_(0),
 	trajectory_index_(0),
-	trajectory_rate_(100)
+	trajectory_rate_(100),
+	number_of_joints_(0),
+	setpoint_seq_(0)
 {
-	rate_ = 30;
+	rate_ = 10;
 
 	new_dynamixel_measurement_ = false;
 
-	joint_state_sub_ros_ = n_.subscribe("dynamixel_state", 1, &WPManipulatorControl::joint_controller_state_cb_ros, this);
+	joint_state_sub_ros_ = n_.subscribe("joint_states", 1, &WPManipulatorControl::joint_controller_state_cb_ros, this);
 	mmuav_position_sub_ros_ = n_.subscribe("pose", 1, &WPManipulatorControl::mmuav_position_cb_ros, this);
 	wp_manipulator_end_effector_position_sub_ros_ = n_.subscribe("wp_manipulator/position_set_point", 1, &WPManipulatorControl::wp_manipulator_end_effector_position_cb_ros, this);
 	wp_manipulator_end_effector_trajectory_sub_ros_ = n_.subscribe("wp_manipulator/trajectory", 1, &WPManipulatorControl::wp_manipulator_end_effector_trajectory_cb_ros, this);
 	
 	mode_sub_ros_ = n_.subscribe("mode", 1, &WPManipulatorControl::mode_cb_ros, this);
-	wp_manipulator_q1_set_point_sub_ros_ = n_.subscribe("wp_manipulator/q1", 1, &WPManipulatorControl::q1_cb_ros, this);
-	wp_manipulator_q2_set_point_sub_ros_ = n_.subscribe("wp_manipulator/q2", 1, &WPManipulatorControl::q2_cb_ros, this);
-	wp_manipulator_q3_set_point_sub_ros_ = n_.subscribe("wp_manipulator/q3", 1, &WPManipulatorControl::q3_cb_ros, this);
-	wp_manipulator_q4_set_point_sub_ros_ = n_.subscribe("wp_manipulator/q4", 1, &WPManipulatorControl::q4_cb_ros, this);
-	wp_manipulator_q5_set_point_sub_ros_ = n_.subscribe("wp_manipulator/q5", 1, &WPManipulatorControl::q5_cb_ros, this);
 
 	manipulator_wrench_ros_pub_ = n_.advertise<geometry_msgs::WrenchStamped>("wrench", 1);
-	dynamixel_sepoint_ros_pub_ = n_.advertise<sensor_msgs::JointState>("goal_dynamixel_position", 1);
+	dynamixel_sepoint_ros_pub_ = n_.advertise<trajectory_msgs::JointTrajectory>("joint_trajectory", 1);
 	manipulator_position_pub_ros_ = n_.advertise<geometry_msgs::PoseStamped>("position", 1);
 
 	wrench_zero_all_srv_ros_ = n_.advertiseService("wrench_zero_all", &WPManipulatorControl::wrench_zero_all_cb, this);
@@ -99,6 +81,12 @@ WPManipulatorControl::WPManipulatorControl():
 	wrench_.resize(6,1);
 }
 
+WPManipulatorControl::~WPManipulatorControl() {
+	delete[] q_pos_meas_;
+	delete[] q_torque_meas_;
+	delete[] wp_manipulator_q_set_point_sub_ros_;
+}
+
 bool WPManipulatorControl::wrench_zero_all_cb(std_srvs::Empty::Request  &req, std_srvs::Empty::Response &res) 
 {
 	wrench_ << 0, 0, 0, 0, 0, 0;
@@ -145,7 +133,10 @@ void WPManipulatorControl::LoadParameters(std::string file)
 	arm_origin = config["origin"].as<std::vector<double> >();
 	arm_upper_limits = config["limits"]["upper"].as<std::vector<double> >();
 	arm_lower_limits = config["limits"]["lower"].as<std::vector<double> >();
+	joint_names_ = config["joints"].as<std::vector<std::string> >();
+	q_directions_ = config["directions"].as<std::vector<int> >();
 
+	number_of_joints_ = joint_names_.size();
 
 	Tuav_origin_arm_ <<  cos(arm_origin[5])*cos(arm_origin[4]),  cos(arm_origin[5])*sin(arm_origin[4])*sin(arm_origin[3])-sin(arm_origin[5])*cos(arm_origin[3]),  cos(arm_origin[5])*sin(arm_origin[4])*cos(arm_origin[3])+sin(arm_origin[5])*sin(arm_origin[3]), arm_origin[0],
 					     sin(arm_origin[5])*cos(arm_origin[4]),  sin(arm_origin[5])*sin(arm_origin[4])*sin(arm_origin[3])+cos(arm_origin[5])*cos(arm_origin[3]),  sin(arm_origin[5])*sin(arm_origin[4])*cos(arm_origin[3])-cos(arm_origin[5])*sin(arm_origin[3]), arm_origin[1],
@@ -173,6 +164,39 @@ void WPManipulatorControl::LoadParameters(std::string file)
 	
 	manipulator_inverse.LoadParameters(file);
 	manipulator_direct.LoadParameters(file);
+
+	q_pos_meas_ = new double[number_of_joints_];
+	q_torque_meas_ = new float[number_of_joints_];
+	q_setpoint_ = new float[number_of_joints_];
+	wp_manipulator_q_set_point_sub_ros_ = new ros::Subscriber[number_of_joints_];
+
+	for (int i = 0; i < number_of_joints_; i++) { 
+		wp_manipulator_q_set_point_sub_ros_[i] = n_.subscribe<std_msgs::Float32>("q" + std::to_string(i), 1, boost::bind(&WPManipulatorControl::q_cb_ros, this, _1, i));
+		q_setpoint_[i] = 0.0;
+	}
+}
+
+void WPManipulatorControl::publishJointSetpoints(float *q) {
+	trajectory_msgs::JointTrajectory joint_setpoints;
+	trajectory_msgs::JointTrajectoryPoint joint_setpoint;
+
+	joint_setpoints.header.seq = setpoint_seq_++;
+	joint_setpoints.header.stamp = ros::Time::now();
+	joint_setpoints.header.frame_id = "world";
+
+	for (int i = 0; i < number_of_joints_; i++) {
+		joint_setpoints.joint_names.push_back(joint_names_[i]);
+		joint_setpoint.positions.push_back(q[i]);
+		joint_setpoint.velocities.push_back(0.0);
+		joint_setpoint.accelerations.push_back(0.0);
+		joint_setpoint.effort.push_back(0.0);
+	}
+
+	joint_setpoint.time_from_start = ros::Duration(1);
+
+	joint_setpoints.points.push_back(joint_setpoint);
+
+	dynamixel_sepoint_ros_pub_.publish(joint_setpoints);
 }
 
 void WPManipulatorControl::start()
@@ -181,37 +205,44 @@ void WPManipulatorControl::start()
 
 	geometry_msgs::PoseStamped manipulator_pose;
 	geometry_msgs::WrenchStamped manipulator_wrench;
-	sensor_msgs::JointState  dynamixel_setpoint;
-
-	dynamixel_setpoint.position.push_back(1.57);
-	dynamixel_setpoint.position.push_back(-0.4);
-	dynamixel_setpoint.position.push_back(1.57);
-	dynamixel_setpoint.position.push_back(-1.57);
-	dynamixel_setpoint.position.push_back(2.3);
 
 	Eigen::Matrix4d T16_dk, T16_ref, T12_dk, T26_ref;
-	Eigen::MatrixXd J, Tau(6,1), dX(6,1), dq(6,1);
+	Eigen::MatrixXd J, Tau(6,1), dX(6,1);
 	int nbr_of_solutions;
 
 	float orientationEuler[3], orientationQuaternion[4], Q[5], position[3], q[4];
 	float rot_T26_z[4], feasible_angle;
 
-	/*while (!start_flag_ && ros::ok()) {
+	double dp[6], *dq;
+
+	if (number_of_joints_ == 0)
+	{
+		ROS_ERROR("Yaml file is not setup correctly!");
+	}
+
+	dq = new double[number_of_joints_];
+
+	//std::cout<<manipulator_inverse.getJacobian(0, 0, 0, 0, 0)<<std::endl;
+
+	while (!start_flag_ && ros::ok()) {
 		ros::spinOnce();
 		printf("Waiting for torque measurements.\n");
 		ros::Duration(0.5).sleep();
-	}*/
-
+	}
 
 	while (ros::ok())
 	{
 		ros::spinOnce();
 
 		//direct kinematics
-		T16_dk = manipulator_direct.dk_calculate(q1_pos_meas_, q2_pos_meas_, q3_pos_meas_, q4_pos_meas_, q5_pos_meas_);
-		Tworld_end_effector_dk = Tworld_uav_origin_ * Tuav_origin_arm_ * T16_dk;
+		T16_dk = manipulator_direct.dk_calculate(q_pos_meas_[0], q_pos_meas_[1], q_pos_meas_[2], q_pos_meas_[3], q_pos_meas_[4]);
+		Tworld_end_effector_dk = /*Tworld_uav_origin_ * Tuav_origin_arm_ * */T16_dk;
 
 		getAnglesFromRotationTranslationMatrix(Tworld_end_effector_dk, orientationEuler);
+		std::cout<<orientationEuler[0]<<std::endl;
+		std::cout<<orientationEuler[1]<<std::endl;
+		std::cout<<orientationEuler[2]<<std::endl;
+		std::cout<<""<<std::endl;
 		euler2quaternion(orientationEuler, orientationQuaternion);
 
 		manipulator_pose.header.stamp = ros::Time::now();
@@ -225,7 +256,7 @@ void WPManipulatorControl::start()
 		manipulator_pose.pose.orientation.w = orientationQuaternion[0];
 
 		//force calculation
-		q1_torque_kalman_.modelUpdate(1.0/rate_);
+		/*q1_torque_kalman_.modelUpdate(1.0/rate_);
 		q2_torque_kalman_.modelUpdate(1.0/rate_);
 		q3_torque_kalman_.modelUpdate(1.0/rate_);
 		q4_torque_kalman_.modelUpdate(1.0/rate_);
@@ -248,27 +279,37 @@ void WPManipulatorControl::start()
 			   deadzone(q5_torque_kalman_.getVelocity(), 0, 0),
 			   0;
 
-		wrench_ += J*Tau;
-
+		wrench_ += J*Tau;*/
+		
 		if (manipulator_mode_ == 0) //dk mode
 		{
-			Q[0] = q1_setpoint_;
-			Q[1] = q2_setpoint_;
-			Q[2] = q3_setpoint_;
-			Q[3] = q4_setpoint_;
-			Q[4] = q5_setpoint_;
+			limitJointsPosition(q_setpoint_);
 
-			limitJointsPosition(Q);
-
-			dynamixel_setpoint.position[0] = Q[0];
-			dynamixel_setpoint.position[1] = Q[1];
-			dynamixel_setpoint.position[2] = Q[2];
-			dynamixel_setpoint.position[3] = Q[3];
-			dynamixel_setpoint.position[4] = Q[4];
-			dynamixel_sepoint_ros_pub_.publish(dynamixel_setpoint);
-
+			publishJointSetpoints(q_setpoint_);
 		}
-		else if (manipulator_mode_ == 1) //ik mode
+		else if (manipulator_mode_ == 1) {
+			dp[0] = 0 - Tworld_end_effector_dk(0,3);
+			dp[1] = 0.45222 - Tworld_end_effector_dk(1,3);
+			dp[2] = 0 - Tworld_end_effector_dk(2,3);
+			dp[3] = 0 - orientationEuler[0];
+			dp[4] = -1.57 - orientationEuler[1];
+			dp[5] = -1.57 - orientationEuler[2];
+
+			std::cout<<" dp1: "<<dp[0]<<" dp2: "<<dp[1]<<" dp3: "<<dp[2]<<" dp4: "<<dp[3]<<" dp5: "<<dp[4]<<" dp6: "<<dp[5]<<std::endl;
+
+			manipulator_inverse.ik_dq_calculate(dp, q_pos_meas_, dq);
+
+			std::cout<<"q1: "<<dq[0]<<" q2: "<<dq[1]<<" q3: "<<dq[2]<<" q4: "<<dq[3]<<" q5: "<<dq[4]<<std::endl;
+
+			for (int i = 0; i < number_of_joints_; i++) {
+				q_setpoint_[i] = 0;//q_pos_meas_[i] + q_directions_[i] *(dq[i]/rate_);
+			}
+
+			limitJointsPosition(q_setpoint_);
+
+			publishJointSetpoints(q_setpoint_);
+		}
+		/*else if (manipulator_mode_ == 1) //ik mode
 		{
 			T16_ref = Tuav_origin_arm_inv_ * Tuav_origin_world_ * Tworld_wp_end_effector_ref_;
 			nbr_of_solutions = manipulator_inverse.ik_T12_calculate(T16_ref(1,3), M_PI);
@@ -277,8 +318,8 @@ void WPManipulatorControl::start()
 			{
 				limitJointsPosition(Q);
 
-				dynamixel_setpoint.position[0] = Q[0];
-				dynamixel_setpoint.position[1] = -Q[1];
+				//dynamixel_setpoint.position[0] = Q[0];
+				//dynamixel_setpoint.position[1] = -Q[1];
 			}
 
 			T12_dk = manipulator_direct.dk_T12_calculate(dynamixel_setpoint.position[0], dynamixel_setpoint.position[1]);
@@ -296,7 +337,7 @@ void WPManipulatorControl::start()
 
 				std::cout<<feasible_angle<<std::endl;
 
-				nbr_of_solutions = manipulator_inverse.ik_T26_calculate(T26_ref(0,3), T26_ref(1,3), feasible_angle);
+				nbr_of_solutions = manipulator_inverse.ik_T26_calculate(T26_ref(0,3), T26_ref(1,3), feasible_angle);*/
 
 				/*for (int i=0; i <nbr_of_solutions; i++)
 				{
@@ -307,7 +348,7 @@ void WPManipulatorControl::start()
 				}*/
 				
 
-				if (joint26_criterion_function(manipulator_inverse.getQ3(), manipulator_inverse.getQ4(), manipulator_inverse.getQ5(), 
+				/*if (joint26_criterion_function(manipulator_inverse.getQ3(), manipulator_inverse.getQ4(), manipulator_inverse.getQ5(), 
 					q3_pos_meas_, q4_pos_meas_, q5_pos_meas_, Q, nbr_of_solutions))
 				{
 					limitJointsPosition(Q);
@@ -316,16 +357,16 @@ void WPManipulatorControl::start()
 					dynamixel_setpoint.position[4] = -Q[2];
 				}
 
-			}
+			}*/
 
-			std::cout<<"Q1: "<<dynamixel_setpoint.position[0]<<std::endl;
+			/*std::cout<<"Q1: "<<dynamixel_setpoint.position[0]<<std::endl;
 			std::cout<<"Q2: "<<dynamixel_setpoint.position[1]<<std::endl;
 			std::cout<<"Q3: "<<dynamixel_setpoint.position[2]<<std::endl;
 			std::cout<<"Q4: "<<dynamixel_setpoint.position[3]<<std::endl;
 			std::cout<<"Q5: "<<dynamixel_setpoint.position[4]<<std::endl;
 			std::cout<<""<<std::endl;
 
-			dynamixel_sepoint_ros_pub_.publish(dynamixel_setpoint);
+			dynamixel_sepoint_ros_pub_.publish(dynamixel_setpoint);*/
 
 
 			//Eigen::CompleteOrthogonalDecomposition<Eigen::MatrixXd> cqr(J);
@@ -393,7 +434,7 @@ void WPManipulatorControl::start()
 				dynamixel_sepoint_ros_pub_.publish(dynamixel_setpoint);
 			}*/
 
-		}
+		/*}
 		else if (manipulator_mode_ == 2) {
 
 			if (new_trajectory_) 
@@ -420,7 +461,7 @@ void WPManipulatorControl::start()
 				{
 					new_trajectory_ = false;
 				}
-			}
+			}*/
 
 			//inverse kinematics
 			/*T16_ref = Tuav_origin_arm_inv_ * Tuav_origin_world_ * Tworld_wp_end_effector_ref_;
@@ -442,7 +483,7 @@ void WPManipulatorControl::start()
 			}*/
 
 			
-		}
+		//}
 
 		manipulator_wrench.header.stamp = ros::Time::now();
 		manipulator_wrench.header.frame_id = "wp_manipulator";
@@ -458,36 +499,18 @@ void WPManipulatorControl::start()
 
 		loop_rate.sleep();
 	}
+
+	delete[] dq;
 }
 
-void WPManipulatorControl::q1_cb_ros(const std_msgs::Float32 &msg)
+void WPManipulatorControl::q_cb_ros(const boost::shared_ptr<std_msgs::Float32 const> &msg, int index) 
 {
-	q1_setpoint_ = msg.data;
+	q_setpoint_[index] = q_directions_[index] * msg->data;
 }
 
-void WPManipulatorControl::q2_cb_ros(const std_msgs::Float32 &msg)
+void WPManipulatorControl::joint_controller_state_cb_ros(const sensor_msgs::JointState &msg)
 {
-	q2_setpoint_ = -msg.data;
-}
-void WPManipulatorControl::q3_cb_ros(const std_msgs::Float32 &msg)
-{
-	q3_setpoint_ = -msg.data;
-}
-
-void WPManipulatorControl::q4_cb_ros(const std_msgs::Float32 &msg)
-{
-	q4_setpoint_ = msg.data;
-}
-
-void WPManipulatorControl::q5_cb_ros(const std_msgs::Float32 &msg)
-{
-	q5_setpoint_ = -msg.data;
-}
-
-
-void WPManipulatorControl::joint_controller_state_cb_ros(const dynamixel_workbench_msgs::DynamixelStateList &msg)
-{
-	if (!start_flag_) {
+	/*if (!start_flag_) {
 		if (msg.dynamixel_state.size() > 4) {
 			start_flag_ = true;
 			for (int i = 0; i < 5; i++) {
@@ -503,30 +526,17 @@ void WPManipulatorControl::joint_controller_state_cb_ros(const dynamixel_workben
 					q5_torque_kalman_.initializePosition(q5_torque_median_.filter(-msg.dynamixel_state[i].present_torque_real));
 			}
 		}
-	}
+	}*/
 
-	if (msg.dynamixel_state.size() > 4) {
+	if (number_of_joints_ == msg.name.size()) {
+		start_flag_ = true;
 		new_dynamixel_measurement_ = true;
-		for (int i = 0; i < 5; i++) {
-			if (msg.dynamixel_state[i].id == 1) {
-				q1_pos_meas_ = msg.dynamixel_state[i].present_position_real;
-				q1_torque_meas_ = q1_torque_median_.filter(msg.dynamixel_state[i].present_torque_real);
-			}
-			else if (msg.dynamixel_state[i].id == 2) {
-				q2_pos_meas_ = -msg.dynamixel_state[i].present_position_real;
-				q2_torque_meas_ = q2_torque_median_.filter(-msg.dynamixel_state[i].present_torque_real);
-			}
-			else if (msg.dynamixel_state[i].id == 3) {
-				q3_pos_meas_ = -msg.dynamixel_state[i].present_position_real;
-				q3_torque_meas_ = q3_torque_median_.filter(-msg.dynamixel_state[i].present_torque_real);
-			}
-			else if (msg.dynamixel_state[i].id == 4) {
-				q4_pos_meas_ = msg.dynamixel_state[i].present_position_real;
-				q4_torque_meas_ = q4_torque_median_.filter(msg.dynamixel_state[i].present_torque_real);
-			}
-			else if (msg.dynamixel_state[i].id == 5) {
-				q5_pos_meas_ = -msg.dynamixel_state[i].present_position_real;
-				q5_torque_meas_ = q5_torque_median_.filter(-msg.dynamixel_state[i].present_torque_real);
+		for (int i = 0; i < number_of_joints_; i++) {
+			for (int j = 0; j < number_of_joints_; j++) {
+				if (joint_names_[i].compare(msg.name[j]) == 0) {
+					q_pos_meas_[i] = q_directions_[i] * msg.position[j];
+					break;
+				}
 			}
 		}
 	}
@@ -844,7 +854,11 @@ int WPManipulatorControl::joint_criterion_function(float *q1_in, float *q2_in, f
 
 void WPManipulatorControl::limitJointsPosition(float *q) {
 
-	for (int i=0; i<5; i++) 
+	for (int i = 0; i < number_of_joints_; i++) {
+		if (std::isnan(q[i])) q[i] = q_pos_meas_[i];
+	}
+
+	for (int i=0; i<number_of_joints_; i++) 
 	{
 		if (q[i] > arm_upper_limits_[i]) q[i] = arm_upper_limits_[i];
 		else if (q[i] < arm_lower_limits_[i]) q[i] = arm_lower_limits_[i];
@@ -869,7 +883,7 @@ int main(int argc, char **argv)
 	WPManipulatorControl wpm_control;
 
 	private_node_handle_.param("dh_parameters_file", dh_parameters_file, std::string("/cfg/wp_manipulator_dh_parameters.yaml"));
-	private_node_handle_.param("rate", rate, int(30));
+	private_node_handle_.param("rate", rate, int(10));
 
 	wpm_control.LoadParameters(path+dh_parameters_file);
 	wpm_control.set_rate(rate);

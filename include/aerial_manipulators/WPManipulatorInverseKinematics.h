@@ -11,9 +11,10 @@ class WPManipulatorInverseKinematics
 	public:
 		WPManipulatorInverseKinematics(void);
 		void LoadParameters(std::string file);
+		void ik_dq_calculate(double *dp, double *q, double *dq);
 		int ik_calculate(float x, float y, float z, float rot_y, float rot_z);
 		void setDHparams(WPManipulatorDirectKinematics::DH_Parameters_TypeDef dhParams);
-		Eigen::MatrixXd getJacobian(double q1, double q2, double q3, double q4, double q5);
+		Eigen::MatrixXd getJacobian(double *q);
 		int ik_T12_calculate(float y, float rot_z);
 		int ik_T26_calculate(float x, float y, float rot_z);
 		int getFeasibleRotationT26(float x, float y, float *rot_z);

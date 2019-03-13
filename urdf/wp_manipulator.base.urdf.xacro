@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 
-<robot name="cmanip" xmlns:xacro="http://ros.org/wiki/xacro">
+<robot name="wp_manipulator" xmlns:xacro="http://ros.org/wiki/xacro">
 
   <xacro:include filename="$(find aerial_manipulators)/urdf/manipulator_base.urdf.xacro" />
 
-  <xacro:cmanip
+  <xacro:wp_manipulator
     parent="world">
     <origin xyz="0 0 0" rpy="0 0 0"/>
-  </xacro:cmanip>
+  </xacro:wp_manipulator>
 
   <xacro:transmisija
     trans_number="1"

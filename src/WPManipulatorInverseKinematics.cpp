@@ -65,15 +65,15 @@ float *WPManipulatorInverseKinematics::getQ5(void) {
 	return q5_;
 }
 
-Eigen::MatrixXd WPManipulatorInverseKinematics::getJacobian(double q1, double q2, double q3, double q4, double q5) {
+Eigen::MatrixXd WPManipulatorInverseKinematics::getJacobian(double *q) {
 	Eigen::MatrixXd J(6,6);//*J = new Eigen::MatrixXd(6,6);
 	float theta[6], alpha[6], d[6], a[6];
 
-	theta[0] = dhParams_.theta[0] + q1;
-	theta[1] = dhParams_.theta[1] + q2;
-	theta[2] = dhParams_.theta[2] + q3;
-	theta[3] = dhParams_.theta[3] + q4;
-	theta[4] = dhParams_.theta[4] + q5;
+	theta[0] = dhParams_.theta[0] + q[0];
+	theta[1] = dhParams_.theta[1] + q[1];
+	theta[2] = dhParams_.theta[2] + q[2];
+	theta[3] = dhParams_.theta[3] + q[3];
+	theta[4] = dhParams_.theta[4] + q[4];
 
 	alpha[0] = dhParams_.alpha[0];
 	alpha[1] = dhParams_.alpha[1];
@@ -104,6 +104,24 @@ Eigen::MatrixXd WPManipulatorInverseKinematics::getJacobian(double q1, double q2
            1,                                                                                                                                                                                                                                                                                                     0,                                                                                                                                0,                                                                                                                         0,                                                                                                   -cos(theta[2] + theta[3] + theta[4]),                                        -cos(theta[2] + theta[3] + theta[4]);
 
     return J;
+}
+
+void WPManipulatorInverseKinematics::ik_dq_calculate(double *dp, double *q, double *dq) {
+	Eigen::MatrixXd J = getJacobian(q);
+	Eigen::MatrixXd dq_mat, J_inv, dp_mat(6, 1);
+
+	dp_mat << dp[0], dp[1], dp[2], dp[3], dp[4], dp[5];
+
+	J_inv = (J.transpose()*J).inverse() * J.transpose();
+
+	dq_mat = J_inv * dp_mat;
+
+	dq[0] = dq_mat(0,0);
+	dq[1] = dq_mat(1,0);
+	dq[2] = dq_mat(2,0);
+	dq[3] = dq_mat(3,0);
+	dq[4] = dq_mat(4,0);
+
 }
 
 int WPManipulatorInverseKinematics::ik_T12_calculate(float y, float rot_z) {
