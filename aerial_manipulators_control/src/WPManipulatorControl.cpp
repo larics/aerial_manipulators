@@ -1,4 +1,5 @@
 #include <aerial_manipulators_control/WPManipulatorControl.h>
+#include <ros/package.h>
 
 int main(int argc, char **argv)
 {
@@ -9,16 +10,23 @@ int main(int argc, char **argv)
 	
 	int rate;
 	std::string robot_model_name, joint_group_name;
+	std::string parameters_file;
+
+	std::string path = ros::package::getPath("aerial_manipulators_control");
 
 	private_node_handle_.param("rate", rate, int(30));
 	private_node_handle_.param("robot_name", robot_model_name, std::string("wp_manipulator"));
 	private_node_handle_.param("joint_group_name", joint_group_name, std::string("wp_manipulator_arm"));
+	private_node_handle_.param("parameters_file", parameters_file, std::string("/config/wp_manipulator_dh_parameters.yaml"));
+
+	ros::Publisher manipulator_position_pub_ros_ = n.advertise<geometry_msgs::PoseStamped>("end_effector/pose", 1);
 
 	ManipulatorControl wp_control;
 
 	ros::Rate loop_rate(rate);
 
 	wp_control.setManipulatorName(robot_model_name, joint_group_name);
+	wp_control.LoadParameters(path+parameters_file);
 	wp_control.init(&n);
 
 	while(ros::ok() && !wp_control.isStarted())
@@ -32,14 +40,11 @@ int main(int argc, char **argv)
 	{
 		ros::spinOnce();
 
-		wp_control.getEndEffectorPosition();
+		manipulator_position_pub_ros_.publish(wp_control.getEndEffectorPosition());
+		wp_control.publishJointSetpoints(wp_control.getJointSetpoints());
 
 		loop_rate.sleep();
 	}
-
-	//wpm_control.LoadParameters(path+dh_parameters_file);
-	//wpm_control.set_rate(rate);
-	//wpm_control.start();
 
 	return 0;
 }

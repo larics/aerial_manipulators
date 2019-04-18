@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
     moveit_ros_planning_interface
     moveit_ros_perception
     moveit_visual_tools
+    eigen_conversions
     roscpp
     rospy
     roslib
@@ -25,7 +26,7 @@ find_package(Eigen3 REQUIRED)
 
 catkin_package(
    INCLUDE_DIRS include
-   CATKIN_DEPENDS roscpp rospy roslib rospack moveit_core moveit_visual_tools moveit_ros_planning_interface sensor_msgs
+   CATKIN_DEPENDS roscpp rospy roslib rospack moveit_core moveit_visual_tools moveit_ros_planning_interface sensor_msgs eigen_conversions
    DEPENDS EIGEN3
 )
 
@@ -40,7 +41,7 @@ include_directories(
 link_directories(${catkin_LIBRARY_DIRS})
 
 add_library(ManipulatorControl src/ManipulatorControl.cpp)
-target_link_libraries(ManipulatorControl ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(ManipulatorControl ${catkin_LIBRARIES} ${Boost_LIBRARIES} yaml-cpp)
 
 add_executable(wp_manipulator_control src/WPManipulatorControl.cpp)
 target_link_libraries(wp_manipulator_control ${catkin_LIBRARIES} ManipulatorControl)
