@@ -12,7 +12,7 @@
   </asset>
   <library_images>
     <image id="carbon_fiber_inlay_unidirectional_jpg_002" name="carbon_fiber_inlay_unidirectional_jpg_002">
-      <init_from>carbon%20fiber%20inlay%20unidirectional.jpg.002.jpg</init_from>
+      <init_from>carbon.jpg</init_from>
     </image>
   </library_images>
   <library_effects>
@@ -45,9 +45,9 @@
             <shininess>
               <float sid="shininess">52</float>
             </shininess>
-            <transparent opaque="A_ONE">
+            <!-- transparent opaque="A_ONE">
               <color>1 1 1 1</color>
-            </transparent>
+            </transparent -->
             <index_of_refraction>
               <float sid="index_of_refraction">1</float>
             </index_of_refraction>
@@ -74,9 +74,9 @@
             <shininess>
               <float sid="shininess">306</float>
             </shininess>
-            <transparent opaque="A_ONE">
+            <!--transparent opaque="A_ONE">
               <color>1 1 1 1</color>
-            </transparent>
+            </transparent-->
             <index_of_refraction>
               <float sid="index_of_refraction">1</float>
             </index_of_refraction>
@@ -103,9 +103,9 @@
             <shininess>
               <float sid="shininess">306</float>
             </shininess>
-            <transparent opaque="A_ONE">
+            <!--transparent opaque="A_ONE">
               <color>1 1 1 1</color>
-            </transparent>
+            </transparent-->
             <index_of_refraction>
               <float sid="index_of_refraction">1</float>
             </index_of_refraction>
@@ -132,9 +132,9 @@
             <shininess>
               <float sid="shininess">306</float>
             </shininess>
-            <transparent opaque="A_ONE">
+            <!--transparent opaque="A_ONE">
               <color>1 1 1 1</color>
-            </transparent>
+            </transparent-->
             <index_of_refraction>
               <float sid="index_of_refraction">1</float>
             </index_of_refraction>
@@ -161,9 +161,9 @@
             <shininess>
               <float sid="shininess">306</float>
             </shininess>
-            <transparent opaque="A_ONE">
+            <!--transparent opaque="A_ONE">
               <color>1 1 1 1</color>
-            </transparent>
+            </transparent-->
             <index_of_refraction>
               <float sid="index_of_refraction">1</float>
             </index_of_refraction>
@@ -190,9 +190,9 @@
             <shininess>
               <float sid="shininess">306</float>
             </shininess>
-            <transparent opaque="A_ONE">
+            <!--transparent opaque="A_ONE">
               <color>1 1 1 1</color>
-            </transparent>
+            </transparent-->
             <index_of_refraction>
               <float sid="index_of_refraction">1</float>
             </index_of_refraction>
@@ -219,9 +219,9 @@
             <shininess>
               <float sid="shininess">306</float>
             </shininess>
-            <transparent opaque="A_ONE">
+            <!--transparent opaque="A_ONE">
               <color>1 1 1 1</color>
-            </transparent>
+            </transparent-->
             <index_of_refraction>
               <float sid="index_of_refraction">1</float>
             </index_of_refraction>
