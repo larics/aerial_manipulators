@@ -41,7 +41,21 @@ int main(int argc, char **argv)
 		ros::spinOnce();
 
 		manipulator_position_pub_ros_.publish(wp_control.getEndEffectorPosition());
-		wp_control.publishJointSetpoints(wp_control.getJointSetpoints());
+	
+		geometry_msgs::Pose posa;
+
+
+	    posa.position.x = 0;
+	    posa.position.y = 0.35;
+	    posa.position.z = 0;
+
+	    posa.orientation.x = -0.5;
+	    posa.orientation.y = -0.5;
+	    posa.orientation.z = 0.5;
+	    posa.orientation.w = 0.5;
+
+		//wp_control.publishJointSetpoints(wp_control.getJointSetpoints());
+		wp_control.publishJointSetpoints(wp_control.calculateJointSetpoints(posa));
 
 		loop_rate.sleep();
 	}

@@ -16,6 +16,7 @@ public:
 	ManipulatorControl(void);
 	~ManipulatorControl(void);
 	void setManipulatorName(std::string robot_model_name, std::string joint_model_group_name);
+	std::vector<double> calculateJointSetpoints(geometry_msgs::Pose end_effector_pose);
 	geometry_msgs::PoseStamped getEndEffectorPosition(void);
 	void LoadParameters(std::string file);
 	void publishJointSetpoints(std::vector<double> q);

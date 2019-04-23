@@ -32,8 +32,9 @@ void ManipulatorControl::setManipulatorName(std::string robot_model_name, std::s
 	joint_model_group_name_ = joint_model_group_name; 
 }
 
-void ManipulatorControl::q_cb_ros(const boost::shared_ptr<std_msgs::Float32 const> &msg, int index) {
-	q_setpoint_[index] = q_directions_[index] * msg->data;
+void ManipulatorControl::q_cb_ros(const boost::shared_ptr<std_msgs::Float32 const> &msg, int index) 
+{
+	q_setpoint_[index] = msg->data;
 }
 
 void ManipulatorControl::joint_controller_state_cb_ros(const sensor_msgs::JointState &msg)
@@ -158,7 +159,7 @@ void ManipulatorControl::publishJointSetpoints(std::vector<double> q) {
 
 	for (int i = 0; i < q.size(); i++) {
 		joint_setpoints.joint_names.push_back(joint_names[i]);
-		joint_setpoint.positions.push_back(q[i]);
+		joint_setpoint.positions.push_back(q_directions_[i] * q[i]);
 		joint_setpoint.velocities.push_back(0.0);
 		joint_setpoint.accelerations.push_back(0.0);
 		joint_setpoint.effort.push_back(0.0);
@@ -176,4 +177,28 @@ void ManipulatorControl::LoadParameters(std::string file)
 	YAML::Node config = YAML::LoadFile(file);
 
 	q_directions_ = config["directions"].as<std::vector<int> >();
+}
+
+std::vector<double> ManipulatorControl::calculateJointSetpoints(geometry_msgs::Pose end_effector_pose)
+{
+	std::vector<double> q(number_of_joints_, 0);
+	Eigen::Affine3d end_effector_state;
+
+	bool found_ik = (*kinematic_state_)->setFromIK(joint_model_group_, end_effector_pose, 10, 1);
+
+	if (found_ik)
+	{
+		(*kinematic_state_)->copyJointGroupPositions(joint_model_group_, q);
+		for (int i = 0; i < number_of_joints_; i++) printf("Joint[%d]: %f\n", i, q[i]);
+		printf("\n");
+	}
+	else
+	{
+		ROS_INFO("Did not find IK solution");
+
+		for (int i = 0; i < number_of_joints_; i++)
+			q[i] = q_pos_meas_[i];
+	}
+
+	return q;
 }
