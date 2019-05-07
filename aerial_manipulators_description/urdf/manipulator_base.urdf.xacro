@@ -130,6 +130,12 @@
 
     <link name='end_effector_base'/>
 
+    <joint name="base_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="base"/>
+      <xacro:insert_block name="origin"/>
+    </joint>
+
     <joint name="joint1" type="revolute">
       <parent link="base"/>
       <child link="link1"/>

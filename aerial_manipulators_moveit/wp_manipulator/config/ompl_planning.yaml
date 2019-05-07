@@ -146,5 +146,3 @@ wp_manipulator_arm:
     - LazyPRMstar
     - SPARS
     - SPARStwo
-  projection_evaluator: joints(joint1,joint2)
-  longest_valid_segment_fraction: 0.005

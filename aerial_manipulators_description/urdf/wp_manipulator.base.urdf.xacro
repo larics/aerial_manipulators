@@ -4,6 +4,8 @@
 
   <xacro:include filename="$(find aerial_manipulators_description)/urdf/manipulator_base.urdf.xacro" />
 
+  <link name="world"></link>
+
   <xacro:wp_manipulator
     parent="world">
     <origin xyz="0 0 0" rpy="0 0 0"/>
