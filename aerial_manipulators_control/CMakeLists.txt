@@ -24,6 +24,10 @@ find_package(cmake_modules REQUIRED)
 find_package(Boost REQUIRED)
 find_package(Eigen3 REQUIRED)
 
+generate_dynamic_reconfigure_options(
+    config/JointCtlParams.cfg
+    )
+
 catkin_package(
    INCLUDE_DIRS include
    CATKIN_DEPENDS roscpp rospy roslib rospack moveit_core moveit_visual_tools moveit_ros_planning_interface sensor_msgs eigen_conversions
@@ -39,6 +43,12 @@ include_directories(
 )
 
 link_directories(${catkin_LIBRARY_DIRS})
+
+add_library(pid src/PID.cpp)
+target_link_libraries(pid ${catkin_LIBRARIES})
+
+add_executable(JointPositionControl src/JointPositionControl.cpp)
+target_link_libraries(JointPositionControl pid ${catkin_LIBRARIES} yaml-cpp)
 
 add_library(ManipulatorControl src/ManipulatorControl.cpp)
 target_link_libraries(ManipulatorControl ${catkin_LIBRARIES} ${Boost_LIBRARIES} yaml-cpp)
