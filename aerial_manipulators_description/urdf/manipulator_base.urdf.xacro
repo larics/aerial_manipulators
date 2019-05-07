@@ -154,7 +154,7 @@
       </visual>
     </link>
 
-    <joint name="base_joint" type="fixed">
+    <joint name="wp_base_joint" type="fixed">
       <parent link="${parent}"/>
       <child link="base"/>
       <xacro:insert_block name="origin"/>
