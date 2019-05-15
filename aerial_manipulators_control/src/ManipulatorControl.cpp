@@ -221,3 +221,24 @@ std::vector<double> ManipulatorControl::calculateJointSetpoints(geometry_msgs::P
 
 	return q;
 }
+
+
+std::vector<double> ManipulatorControl::calculateJointSetpoints(geometry_msgs::Pose end_effector_pose, bool &found_ik_flag)
+{
+	std::vector<double> q(number_of_joints_, 0);
+
+	bool found_ik = (*kinematic_state_)->setFromIK(joint_model_group_, end_effector_pose, 10, 1);
+
+	if (found_ik)
+		(*kinematic_state_)->copyJointGroupPositions(joint_model_group_, q);
+	else
+	{
+		ROS_INFO("Did not find IK solution");
+
+		for (int i = 0; i < number_of_joints_; i++)
+			q[i] = q_pos_meas_[i];
+	}
+
+	found_ik_flag = found_ik;
+	return q;
+}

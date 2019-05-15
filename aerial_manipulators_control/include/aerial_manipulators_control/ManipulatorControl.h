@@ -19,6 +19,7 @@ public:
 	~ManipulatorControl(void);
 	void setManipulatorName(std::string robot_model_name, std::string joint_model_group_name);
 	std::vector<double> calculateJointSetpoints(geometry_msgs::Pose end_effector_pose);
+	std::vector<double> calculateJointSetpoints(geometry_msgs::Pose end_effector_pose, bool &found_ik_flag);
 	geometry_msgs::PoseStamped getEndEffectorPosition(void);
 	geometry_msgs::Pose getEndEffectorReferencePosition(void);
 	void LoadParameters(std::string file);
