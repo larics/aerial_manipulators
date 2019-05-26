@@ -78,7 +78,7 @@ class CManip:
                 self.check.y = TW5[1,3] - self.poseEnd.pose[6].position.y
                 self.check.z = TW5[2,3] - self.poseEnd.pose[6].position.z
 
-                print(TW5)
+                #print(TW5)
 
                 self.pub1.publish(self.check)
 

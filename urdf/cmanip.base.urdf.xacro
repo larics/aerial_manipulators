@@ -3,10 +3,10 @@
 <robot name="cmanip" xmlns:xacro="http://ros.org/wiki/xacro">
 
   <xacro:include filename="$(find aerial_manipulators)/urdf/manipulator_base.urdf.xacro" />
-
+  <link name="world"></link>
   <xacro:cmanip
     parent="world">
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="0 0 0" rpy="${pi/2} 0 ${pi}"/>
   </xacro:cmanip>
 
   <xacro:transmisija

@@ -22,7 +22,7 @@
 
     <xacro:property name="rad" value="0.03"/>
 
-    <link name="world"></link>
+    <!--link name="world"></link-->
 
 
 
@@ -144,10 +144,11 @@
 
 
     <joint name="link0_to_link1" type="revolute">
-      <parent link="world"/>
+      <parent link="${parent}"/>
       <child link="link1"/>
       <!-- Adjust Gazebo coordinate system to link1 coordinate system -->
-      <origin xyz="0 0 0" rpy="${pi/2} 0 ${pi}"/>
+      <!--origin xyz="0 0 0.075" rpy="${pi/2} 0 ${pi}"/-->
+      <xacro:insert_block name="origin"/>
       <limit upper="1.57" lower="-1.57" effort="10000000" velocity="20"/>
       <axis xyz="0 0 1" />
     </joint>
