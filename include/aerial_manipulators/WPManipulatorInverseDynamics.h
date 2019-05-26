@@ -21,7 +21,7 @@ public:
 
 	void setD_(float x[6][3][3]);
 
-	// Get functions
+	// Get function
 	void getTau(float x[6]);
 
 	// Calculate tau

@@ -5,7 +5,7 @@
 #include <math.h>
 #include <chrono>
 
-// Utility functions
+// Utility function
 
 // Transpose of 2D array
 void transpose(float mtxA[][3], float res[][3]) {

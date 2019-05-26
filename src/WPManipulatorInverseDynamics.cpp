@@ -105,7 +105,7 @@ void setNx3(float mtxA[][3], float res[][3], int n_) { for (int i = 0; i < n_; i
 // Function setAll takes dq_ and ddq_ vectors of velocity and acceleration with dq_[0] = ddq_[0] = anything, since dq0 and ddq0 aren'T_ assigned to manipulator,
 // T_ is an array of transformation matrices: T00, T01, T02, T03, T04, T05 and v0, w0, dv0, dw0, f6, n6 are initial conditions
 // Function calculateID calculates torques of joints using values set with setAll function and saves it in variable "tau"
-// To get tau use function getTau
+// To get tau use func getTau
 // IMPORTANT: All values are indexed as they are indexed in reality, so, tau[1] is the torque of the first joint and so on. tau[0] is always equal to 0 as it isn'T_ assigned to the manipulator
 
 WPManipulatorInverseDynamics::WPManipulatorInverseDynamics(float *massset, float dcset[6][3], float D_set[6][3][3]) {

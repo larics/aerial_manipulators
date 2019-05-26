@@ -23,8 +23,5 @@
     <remap from="/joint_states" to="$(arg namespace)/joint_states"/>
     <remap from="/robot_description" to="$(arg namespace)/robot_description"/>
   </node>
-<!--
-  <node name="cmanipForwardKinematic" pkg="aerial_manipulators" type="cmanipForwardKinematics.py" output="screen"  ns="$(arg namespace)">
-  </node>
--->
+  
 </launch>

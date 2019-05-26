@@ -23,8 +23,8 @@ generate_dynamic_reconfigure_options(
 
 add_message_files(
   FILES
-  float5.msg
   float6.msg
+  float5.msg
 )
 
 generate_messages(
