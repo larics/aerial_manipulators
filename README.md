@@ -1,1 +1,11 @@
 # aerial_manipulators
+# /cmanip/joint_states/position[0]
+# /cmanip/joint_states/position[1]
+# /cmanip/joint_states/position[2]
+# /cmanip/joint_states/position[3]
+# /cmanip/joint_states/position[4]
+# /cmanip/joint1_position_controller/command
+# /cmanip/joint2_position_controller/command
+# /cmanip/joint3_position_controller/command
+# /cmanip/joint4_position_controller/command
+# /cmanip/joint5_position_controller/command

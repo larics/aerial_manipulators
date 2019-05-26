@@ -14,11 +14,11 @@
     <xacro:property name="theta1" value="${pi/2}"/>
     <xacro:property name="alpha2" value="${-pi/2}"/>
 
-    <xacro:property name="mass2" value="0.03"/>
-    <xacro:property name="mass1" value="${mass2*a1/a2}"/>
-    <xacro:property name="mass3" value="${mass2*a3/a2}"/>
-    <xacro:property name="mass4" value="${mass2*a4/a2}"/>
-    <xacro:property name="mass5" value="${mass2*d5/a2}"/>
+    <xacro:property name="mass1" value="0.01715"/>
+    <xacro:property name="mass2" value="0.10663"/>
+    <xacro:property name="mass3" value="0.17449"/>
+    <xacro:property name="mass4" value="0.01133"/>
+    <xacro:property name="mass5" value="0.08200"/>
 
     <xacro:property name="rad" value="0.03"/>
 
@@ -29,11 +29,8 @@
     <link name='link1'>
       <inertial>
         <mass value="${mass1}" />
-        <origin xyz="0 ${a1/2} 0" rpy="0 0 0"/>
-        <inertia
-          ixx="${1/12 * mass1 * (3*rad*rad + a1*a1)}" ixy="0" ixz="0"
-          iyx="0" iyy="${1/2 * mass1 * rad * rad}" iyz="0"
-          izx="0" izy="0" izz="${1/12 * mass1 * (3*rad*rad + a1*a1)}"/>
+        <origin xyz="0.00073 0.06124 -0.00009" rpy="0 0 0"/>
+        <inertia ixx = "0.00003618101"	ixy = "-0.00000032742"	ixz = "0.00" iyy = "0.00000866025"	iyz = "0.00"	izz = "0.00003041429"/>
       </inertial>
 
       <visual>
@@ -50,11 +47,8 @@
     <link name='link2'>
       <inertial>
         <mass value="${mass2}" />
-        <origin xyz="${a2/2} 0 0" rpy="0 0 0"/>
-        <inertia
-          ixx="${1/2 * mass2 * rad * rad}" ixy="0" ixz="0"
-          iyx="0" iyy="${1/12 * mass2 * (3*rad*rad + a2*a2)}" iyz="0"
-          izx="0" izy="0" izz="${1/12 * mass2 * (3*rad*rad + a2*a2)}"/>
+        <origin xyz="0.0257 0.00004 0" rpy="0 0 0"/>
+        <inertia ixx="0.000025414" ixy="0.00000000062" ixz="-0.00000114006" iyy="0.00013446945" iyz="0.00000000001" izz="0.00013233260"/>
       </inertial>
 
       <visual>
@@ -70,11 +64,8 @@
     <link name='link3'>
       <inertial>
         <mass value="${mass3}" />
-        <origin xyz="${a3/2} 0 0" rpy="0 0 0"/>
-        <inertia
-          ixx="${1/2 * mass3 * rad * rad}" ixy="0" ixz="0"
-          iyx="0" iyy="${1/12 * mass3 * (3*rad*rad + a3*a3)}" iyz="0"
-          izx="0" izy="0" izz="${1/12 * mass3 * (3*rad*rad + a3*a3)}"/>
+        <origin xyz="0.03443 0 0.00018" rpy="0 0 0"/>
+        <inertia ixx="0.00003095696" ixy="0.00000000169" ixz="0" iyy="0.00016728462" iyz="0" izz="0.00015971261"/>
       </inertial>
 
       <visual>
@@ -91,11 +82,8 @@
     <link name='link4'>
       <inertial>
         <mass value="${mass4}" />
-        <origin xyz="${a4/2} 0 0" rpy="0 0 0"/>
-        <inertia
-          ixx="${1/2 * mass4 * rad * rad}" ixy="0" ixz="0"
-          iyx="0" iyy="${1/12 * mass4 * (3*rad*rad + a4*a4)}" iyz="0"
-          izx="0" izy="0" izz="${1/12 * mass4 * (3*rad*rad + a4*a4)}"/>
+        <origin xyz="0.03624 0 -0.00059" rpy="0 0 0"/>
+        <inertia ixx="0.00000540203" ixy="0" ixz="0" iyy="0.00001225566" iyz="0" izz="0.00000858285"/>
       </inertial>
 
       <visual>
@@ -112,11 +100,8 @@
     <link name='link5'>
       <inertial>
         <mass value="${mass5}" />
-        <origin xyz="${d5/2} 0 0" rpy="0 0 0"/>
-        <inertia
-          ixx="${1/2 * mass5 * rad * rad}" ixy="0" ixz="0"
-          iyx="0" iyy="${1/12 * mass5 * (3*rad*rad + d5*d5)}" iyz="0"
-          izx="0" izy="0" izz="${1/12 * mass5 * (3*rad*rad + d5*d5)}"/>
+        <origin xyz="0.01179 0 0.00023" rpy="0 0 0"/>
+        <inertia ixx="0.00001323215" ixy="0.00000000037" ixz="-0.0000019846" iyy="0.00002293047" iyz="0.0000000002" izz="0.00002030725"/>
       </inertial>
 
       <visual>
@@ -126,9 +111,17 @@
             scale="1 1 1" />
         </geometry>
       </visual>
+
+      <collision>
+        <origin xyz="0 0 0" rpy="0 ${pi / 2} 0" />
+        <geometry>
+          <mesh filename="package://aerial_manipulators/meshes/wp_manipulator/link5.dae"
+            scale="1 1 1" />
+        </geometry>
+      </collision>
     </link>
 
-
+<!--
     <link name="endEffector">
       <inertial>
         <mass value="0.00001" />
@@ -145,7 +138,7 @@
         </geometry>
       </visual>
     </link>
-
+-->
 
 
 
@@ -196,9 +189,12 @@
       <origin xyz="${a4} 0 0" rpy="0 0 0"/>
       <limit upper="2.3" lower="-2.3" effort="10000000" velocity="20"/>
       <axis xyz="0 0 1" />
+      <sensor name="force_torque" type="force_torque">
+        <update_rate>30</update_rate>
+      </sensor>
     </joint>
 <!--       <limit upper="2.3" lower="-2.3" effort="10000000" velocity="20"/> -->
-
+<!--
     <joint name="link5_to_ef" type="revolute">
       <parent link="link5"/>
       <child link="endEffector"/>
@@ -206,7 +202,7 @@
       <limit upper="0" lower="0" effort="10000000" velocity="20"/>
       <axis xyz="0 0 1" />
     </joint>
-
+-->
   </xacro:macro>
 
 
@@ -224,5 +220,34 @@
       </actuator>
     </transmission>
   </xacro:macro>
+
+
+<!--
+  <xacro:macro name="ft_sensor_gazebo" params="parent name type">
+
+    <gazebo reference="${name}_${type}_base">
+      <gravity>true</gravity>
+    </gazebo>
+
+    <gazebo reference="${name}_${type}_measure">
+      <gravity>true</gravity>
+    </gazebo>
+
+    <gazebo reference="${parent}_${name}_measure_joint">
+      <provideFeedback>true</provideFeedback>
+    </gazebo>
+
+    <gazebo>
+        <plugin name="${name}_ft_sensor" filename="libgazebo_ros_ft_sensor.so">
+        <updateRate>1000.0</updateRate>
+        <topicName>${parent}_${name}/ft_sensor_topic</topicName>
+        <jointName>${parent}_${name}_measure_joint</jointName>
+
+        </plugin>
+    </gazebo>
+
+  </xacro:macro>
+-->
+
 
 </robot>

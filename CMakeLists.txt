@@ -9,20 +9,32 @@ find_package(catkin REQUIRED COMPONENTS
     std_msgs
     dynamic_reconfigure
     dynamixel_workbench_msgs
+    message_generation
 )
 
 add_definitions(-std=c++11)
 
 find_package(cmake_modules REQUIRED)
-find_package(Eigen 3 REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 generate_dynamic_reconfigure_options(
     config/JointCtlParams.cfg
     )
 
+add_message_files(
+  FILES
+  float5.msg
+  float6.msg
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
+
 catkin_package(
    INCLUDE_DIRS include
-   CATKIN_DEPENDS roscpp rospy roslib rospack
+   CATKIN_DEPENDS roscpp rospy roslib rospack message_runtime
 )
 
 include_directories(
@@ -35,6 +47,12 @@ target_link_libraries(pid ${catkin_LIBRARIES})
 
 add_executable(joint_position_control src/joint_position_control.cpp)
 target_link_libraries(joint_position_control pid ${catkin_LIBRARIES} yaml-cpp)
+
+add_library(WPManipulatorInverseDynamics src/WPManipulatorInverseDynamics.cpp)
+target_link_libraries(WPManipulatorInverseDynamics ${catkin_LIBRARIES})
+
+add_executable(WPManipulatorForceEstimation src/WPManipulatorForceEstimation.cpp)
+target_link_libraries(WPManipulatorForceEstimation WPManipulatorInverseDynamics ${catkin_LIBRARIES})
 
 #add_library(WPManipulatorDirectKinematics src/WPManipulatorDirectKinematics.cpp)
 #target_link_libraries(WPManipulatorDirectKinematics ${catkin_LIBRARIES} yaml-cpp)

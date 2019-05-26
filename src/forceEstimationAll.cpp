@@ -81,13 +81,13 @@ void crossProduct(float vecA[], float vecB[], float res[])
 }
 
 // Assign nx4x4 2D array with values from Eigen::Matrix4d
-void matrixTo2DArray(Eigen::Matrix4d mtxA, float res[][4][4], int n) { 
-	for (int i = 0; i < 4; i++) { 
-		for (int j = 0; j < 4; j++) { 
-			res[n][i][j] = mtxA(i, j); 
-		} 
-	} 
-} 
+void matrixTo2DArray(Eigen::Matrix4d mtxA, float res[][4][4], int n) {
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			res[n][i][j] = mtxA(i, j);
+		}
+	}
+}
 
 // Calculation of transfomation matrix
 Eigen::Matrix4d transformCalculate(float thetak, float dk, float ak, float alphak, float theta0k) {
@@ -136,12 +136,12 @@ public:
 	}
 
 	// Get functions
-	void getTau(float x[6]) { 
-		std::copy(tau, tau + 6, x); 
+	void getTau(float x[6]) {
+		std::copy(tau, tau + 6, x);
 	}
 
 	// Calculate tau
-	void calculateID(float *q, float *v0, float *w0, float *f6, float *n6) {
+	void calculateID(float *q, float *v0, float *w0, float dtime) {
 
 		// Get time
 		timeNew_ = std::chrono::system_clock::now();
@@ -149,24 +149,26 @@ public:
 		float time = elapsedTime.count();
 		timeOld_ = timeNew_;
 
-		// Calculate dq and ddq
-		for (int i = 0; i < 6; i++) {
-			// Doesn't work offline:
-			//dq_[i] = (q[i] - qOld_[i]) / time;
-			//qOld_[i] = q[i];
-			//ddq_[i] = (dq_[i] - dqOld_[i]) / time;
-			//dqOld_[i] = dq_[i];
-			// ____________________
-			dq_[i] = 0;
-			ddq_[i] = 0;
+		if (dtime ~= 0) {
+			dq_[i] = (q[i] - qOld_[i]) / dtime;
+			qOld_[i] = q[i];
+			ddq_[i] = (dq_[i] - dqOld_[i]) / dtime;
+			dqOld_[i] = dq_[i];
+		} else {
+			for (int i = 0; i < 6; i++) {
+				dq_[i] = 0;
+				ddq_[i] = 0;
+				qOld_[i] = dq[i];
+				dqOld[i] = dq_[i];
 		}
+		// Calculate dq and ddq
 
 		// Assign appropriate vectors to arrays (implementation of dv_ dw_ assignment should be done here)
 		for (int i = 0; i < 3; i++) {
 			v_[0][i] = v0[i];
 			w_[0][i] = w0[i];
-			f_[6][i] = f6[i];
-			n_[6][i] = n6[i];
+			f_[6][i] = 0;
+			n_[6][i] = 0;
 		}
 
 		// This shouldn't be needed online, should be implemented above
@@ -412,7 +414,7 @@ public:
 		for (int i = 0; i < 5; i++) {
 			if (dq[i] > 0) {
 				sign[i] = 1;
-			} 
+			}
 			else if (dq[i] < 0) {
 				sign[i] = -1;
 			}
@@ -535,4 +537,223 @@ int main()
 		std::cout << tauh[i] << "\n";
 	}
 
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#include <math.h>
+#include "yaml-cpp/yaml.h"
+#include <iostream>
+#include <array>
+#include <chrono>
+#include <ros/ros.h>
+#include <sensor_msgs/JointState.h>
+#include <geometry_msgs/Vector3.h>
+#include <ros/console.h>
+#include <std_msgs/Float64.h>
+#include <geometry_msgs/Point.h>
+#include <aerial_manipulators/WPManipulatorInverseDynamics.h>
+#include <aerial_manipulators/float5.h>
+#include <aerial_manipulators/float6.h>
+
+class WPManipulatorForceEstimation {
+	ros::NodeHandle nh_;
+	ros::Subscriber sub_;
+	ros::Publisher pub_;
+
+	sensor_msgs::JointState js_;
+	aerial_manipulators::float6 force_;
+
+	float q_pos_[6];
+	int rate_;
+	float tauget_[6];
+	float tauki_[5];
+
+	float massh_[6] = { 0.0, 0.01715, 0.10663, 0.17449, 0.01133, 0.08200 };
+
+	float dch_[6][3] = { {0 / 1000, 0 / 1000, 0 / 1000}, {-61.24 / 1000, 0.0 / 1000, -0.09 / 1000}, {-110.80 / 1000, -0.63 / 1000, -0.59 / 1000}, {-37.76 / 1000, 0.0 / 1000, 0.18 / 1000}, {-36.24 / 1000, 0.0 / 1000, -0.59 / 1000}, {-0.21 / 1000, -0.83 / 1000, -33.46 / 1000} };
+
+	float D_h_[6][3][3] = { {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}},
+	{ {8656.5 / 1000000000, 0.18 / 1000000000, 96.42 / 1000000000}, {0.18 / 1000000000, 100511.76 / 1000000000, 0.00 / 1000000000}, {96.42 / 1000000000, 0.00 / 1000000000, 94741.01 / 1000000000} },
+	{ {25494.33 / 1000000000, 8639.22 / 1000000000, 6994.05 / 1000000000}, {8639.22 / 1000000000, 1441278.11 / 1000000000, 40.06 / 1000000000}, {6994.05 / 1000000000, 40.06 / 1000000000, 1443420.56 / 1000000000} },
+	{ {30962.85 / 1000000000, 0.59 / 1000000000, -1210.86 / 1000000000}, {0.59 / 1000000000, 416023.24 / 1000000000, 0.01 / 1000000000}, {-1210.86 / 1000000000, 0.01 / 1000000000, 408445.34 / 1000000000} },
+	{ {5406.00 / 1000000000, 0.07 / 1000000000, 243.11 / 1000000000}, {0.07 / 1000000000, 27148.80 / 1000000000, 0.00 / 1000000000}, {243.11 / 1000000000, 0.00 / 1000000000, 23472.02 / 1000000000} },
+	{ {114783.85 / 1000000000, 14.13 / 1000000000, 571.94 / 1000000000}, {14.13 / 1000000000, 112108.36 / 1000000000, 2462.51 / 1000000000}, {571.94 / 1000000000, 2462.51 / 1000000000, 13291.56 / 1000000000} } };
+
+
+
+public:
+	WPManipulatorForceEstimation(void);
+	~WPManipulatorForceEstimation(void);
+
+	Eigen::Matrix<float, 6, 1> forceEstimate(float *q, float *v0, float *w0, float *taukih, float dtime);
+
+	Eigen::Matrix<float, 6, 5> jacobian(float *q);
+
+	void joint_states_Callback(const sensor_msgs::JointState& msg);
+
+	void run(void);
+
+};
+
+Eigen::Matrix<float, 6, 1> WPManipulatorForceEstimation::forceEstimate(float *q, float *v0, float *w0, float *taukih, float dtime) {
+
+	WPManipulatorInverseDynamics WPMID_(massh_, dch_, D_h_);
+	Eigen::Matrix<float, 6, 5> jacob;
+	// Eigen::Matrix<float, 5, 6> jacobt;
+	Eigen::Matrix<float, 5, 1> tauki, taumi;
+
+	taumi = WPMID_.calculateID(q, v0, w0, dtime);
+
+	for (int i = 0; i < 5; i++) {
+		taumi(i) = taukih[i + 1];
+	}
+	jacob = jacobian(q);
+
+	Eigen::Matrix<float, 6, 1> force;
+	Eigen::MatrixXd jacobt = jacob.transpose();
+	//Eigen::CompleteOrthogonalDecomposition<float, 5, 6> cod(jacobt);
+	// force = jacobt.completeOrthogonalDecomposition().pseudoInverse() * (tauki - taumi);
+	//force = cod.pseudoInverse * (tauki - taumi);
+	return force;
+}
+
+
+Eigen::Matrix<float, 6, 5> WPManipulatorForceEstimation::jacobian(float *q) {
+
+	Eigen::Matrix<float, 6, 5> jacob;
+
+	jacob(0, 0) = 0.072489*cos(q[1] + q[2])*sin(q[3])*sin(q[4]) - 0.12249*cos(q[1]) - 0.04526*cos(q[3] + q[4] + q[5])*cos(q[1] + q[2]) - 0.075511*cos(q[1] + q[2])*cos(q[3]) - 0.072489*cos(q[1] + q[2])*cos(q[3])*cos(q[4]) - 0.1365*cos(q[1] + q[2]);
+	jacob(0, 1) = -cos(q[1] + q[2])*(0.04526 * cos(q[3] + q[4] + q[5]) + 0.072489 * cos(q[3] + q[4]) + 0.075511 * cos(q[3]) + 0.1365);
+	jacob(0, 2) = sin(q[1] + q[2])*(0.04526 * sin(q[3] + q[4] + q[5]) + 0.072489 * sin(q[3] + q[4]) + 0.075511 * sin(q[3]));
+	jacob(0, 3) = sin(q[1] + q[2])*(0.04526 * sin(q[3] + q[4] + q[5]) + 0.072489 * sin(q[3] + q[4]));
+	jacob(0, 4) = 0.04526 * sin(q[3] + q[4] + q[5])*sin(q[1] + q[2]);
+
+	jacob(1, 0) = 0.072489*sin(q[1] + q[2])*sin(q[3])*sin(q[4]) - 0.12249*sin(q[1]) - 0.04526*cos(q[3] + q[4] + q[5])*sin(q[1] + q[2]) - 0.075511*sin(q[1] + q[2])*cos(q[3]) - 0.072489*sin(q[1] + q[2])*cos(q[3])*cos(q[4]) - 0.1365*sin(q[1] + q[2]);
+	jacob(1, 1) = -sin(q[1] + q[2])*(0.4526 * cos(q[3] + q[4] + q[5]) + 0.72489 * cos(q[3] + q[4]) + 0.75511 * cos(q[3]) + 1.365);
+	jacob(1, 2) = -cos(q[1] + q[2])*(0.04526 * sin(q[3] + q[4] + q[5]) + 0.072489 * sin(q[3] + q[4]) + 0.075511 * sin(q[3]));
+	jacob(1, 3) = -cos(q[1] + q[2])*(0.04526 * sin(q[3] + q[4] + q[5]) + 0.072489 * sin(q[3] + q[4]));
+	jacob(1, 4) = -0.04526*sin(q[3] + q[4] + q[5])*cos(q[1] + q[2]);
+
+	jacob(2, 0) = 0;
+	jacob(2, 1) = 0;
+	jacob(2, 2) = -0.04526*cos(q[3] + q[4] + q[5]) - 0.072489*cos(q[3] + q[4]) - 0.075511*cos(q[3]);
+	jacob(2, 3) = -0.04526*cos(q[3] + q[4] + q[5]) - 0.072489*cos(q[3] + q[4]);
+	jacob(2, 4) = -0.04526*cos(q[3] + q[4] + q[5]);
+
+	jacob(3, 0) = 0;
+	jacob(3, 1) = 0;
+	jacob(3, 2) = -cos(q[1] + q[2]);
+	jacob(3, 3) = -cos(q[1] + q[2]);
+	jacob(3, 4) = -cos(q[1] + q[2]);
+
+	jacob(4, 0) = 0;
+	jacob(4, 1) = 0;
+	jacob(4, 2) = -sin(q[1] + q[2]);
+	jacob(4, 3) = -sin(q[1] + q[2]);
+	jacob(4, 4) = -sin(q[1] + q[2]);
+
+	jacob(5, 0) = 1;
+	jacob(5, 1) = 1;
+	jacob(5, 2) = 0;
+	jacob(5, 3) = 0;
+	jacob(5, 4) = 0;
+
+	return jacob;
+}
+
+
+WPManipulatorForceEstimation::WPManipulatorForceEstimation(void) {
+	sub_ = nh_.subscribe("joint_states", 1, &WPManipulatorForceEstimation::joint_states_Callback, this);
+	rate_ = 10;
+	pub_ = nh_.advertise<aerial_manipulators::float6>("force", 1);
+}
+
+WPManipulatorForceEstimation::~WPManipulatorForceEstimation(void) {}
+
+void WPManipulatorForceEstimation::joint_states_Callback(const sensor_msgs::JointState &msg)
+{
+	for (int i = 0; i < 5; i++) {
+		q_pos_[i+1] = msg.position[i];
+		tauki_[i] = msg.effort[i];
+	}
+}
+
+
+void WPManipulatorForceEstimation::run(void)
+{
+
+	int count = 0;
+	ros::Rate loop_rate(rate_);
+	while(ros::ok())
+	{
+		ros::spinOnce();
+
+		float v0[3] = {0, 0, 0}, w0[3] = {0, 0, 0}, dtime;
+		dtime = 1/rate_;
+
+		WPManipulatorInverseDynamics WPMID_(massh_, dch_, D_h_);
+		if (count == 0) {
+			dtime = 0;
+		}
+
+		Eigen::Matrix<float, 6, 1> force;
+		force = forceEstimate(q_pos_, v0, w0, tauki_, dtime);
+
+		force_.a = force[0];
+		force_.b = force[1];
+		force_.c = force[2];
+		force_.d = force[3];
+		force_.e = force[4];
+		force_.f = force[5];
+
+		pub_.publish(force_);
+
+		loop_rate.sleep();
+		++count;
+	}
+
+	return;
+}
+
+
+
+int main(int argc, char **argv) {
+	ros::init(argc, argv, "listener");
+	WPManipulatorForceEstimation WPMFE_node;
+	WPMFE_node.run();
+	return 0;
 }

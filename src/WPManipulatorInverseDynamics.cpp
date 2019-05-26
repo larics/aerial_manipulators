@@ -76,13 +76,13 @@ void crossProduct(float vecA[], float vecB[], float res[])
 }
 
 // Assign nx4x4 2D array with values from Eigen::Matrix4d
-void matrixTo2DArray(Eigen::Matrix4d mtxA, float res[][4][4], int n) { 
-	for (int i = 0; i < 4; i++) { 
-		for (int j = 0; j < 4; j++) { 
-			res[n][i][j] = mtxA(i, j); 
-		} 
-	} 
-} 
+void matrixTo2DArray(Eigen::Matrix4d mtxA, float res[][4][4], int n) {
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			res[n][i][j] = mtxA(i, j);
+		}
+	}
+}
 
 // Calculation of transfomation matrix
 Eigen::Matrix4d transformCalculate(float thetak, float dk, float ak, float alphak, float theta0k) {
@@ -127,37 +127,35 @@ void WPManipulatorInverseDynamics::setD_(float x[6][3][3]) {
 }
 
 // Get functions
-void WPManipulatorInverseDynamics::getTau(float x[6]) { 
-	std::copy(tau, tau + 6, x); 
+void WPManipulatorInverseDynamics::getTau(float x[6]) {
+	std::copy(tau_, tau_ + 6, x);
 }
 
 // Calculate tau
-void WPManipulatorInverseDynamics::calculateID(float *q, float *v0, float *w0, float *f6, float *n6) {
+Eigen::Matrix<float, 5, 1> WPManipulatorInverseDynamics::calculateID(float *q, float *v0, float *w0, float dtime) {
 
-	// Get time
-	timeNew_ = std::chrono::system_clock::now();
-	std::chrono::duration<float> elapsedTime = timeOld_ - timeNew_;
-	float time = elapsedTime.count();
-	timeOld_ = timeNew_;
-
-	// Calculate dq and ddq
-	for (int i = 0; i < 6; i++) {
-		// Doesn't work offline:
-		//dq_[i] = (q[i] - qOld_[i]) / time;
-		//qOld_[i] = q[i];
-		//ddq_[i] = (dq_[i] - dqOld_[i]) / time;
-		//dqOld_[i] = dq_[i];
-		// ____________________
-		dq_[i] = 0;
-		ddq_[i] = 0;
+	if (dtime != 0) {
+		for (int i = 0; i < 6; i++) {
+			dq_[i] = (q[i] - qOld_[i]) / dtime;
+			ddq_[i] = (dq_[i] - dqOld_[i]) / dtime;
+			qOld_[i] = q[i];
+			dqOld_[i] = dq_[i];
+		}
+	} else {
+		for (int i = 0; i < 6; i++) {
+			dq_[i] = 0;
+			ddq_[i] = 0;
+			qOld_[i] = q[i];
+			dqOld_[i] = dq_[i];
+		}
 	}
 
 	// Assign appropriate vectors to arrays (implementation of dv_ dw_ assignment should be done here)
 	for (int i = 0; i < 3; i++) {
 		v_[0][i] = v0[i];
 		w_[0][i] = w0[i];
-		f_[6][i] = f6[i];
-		n_[6][i] = n6[i];
+		f_[6][i] = 0;
+		n_[6][i] = 0;
 	}
 
 	// This shouldn't be needed online, should be implemented above
@@ -296,6 +294,18 @@ void WPManipulatorInverseDynamics::calculateID(float *q, float *v0, float *w0, f
 		n_[i][1] = n_[i + 1][1] + crossdsdrf1[1] - crossdrf2[1] + Ddw[1] + crossdwDw[1];
 		n_[i][2] = n_[i + 1][2] + crossdsdrf1[2] - crossdrf2[2] + Ddw[2] + crossdwDw[2];
 
-		tau[i] = n_[i][0] * z_[i - 1][0] + n_[i][1] * z_[i - 1][1] + n_[i][2] * z_[i - 1][2];
+		tau_[i] = n_[i][0] * z_[i - 1][0] + n_[i][1] * z_[i - 1][1] + n_[i][2] * z_[i - 1][2];
 	}
+
+	Eigen::Matrix<float, 5, 1> tau5;
+	for (int i = 0; i < 5; i++) {
+		tau5(i) = tau_[i+1];
+	}
+
+	return tau5;
+
+}
+
+int main(int argc, char **argv) {
+	return 0;
 }

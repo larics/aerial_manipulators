@@ -6,7 +6,6 @@
 #include <eigen3/Eigen/Eigen>
 #include <iostream>
 #include <array>
-#include <Eigen/Dense>
 #include <chrono>
 
 class WPManipulatorInverseDynamics {
@@ -26,7 +25,7 @@ public:
 	void getTau(float x[6]);
 
 	// Calculate tau
-	void calculateID(float *q, float *v0, float *w0, float *f6, float *n6);
+	Eigen::Matrix<float, 5, 1> calculateID(float *q, float *v0, float *w0, float dtime);
 
 private:
 
@@ -59,7 +58,7 @@ private:
 
 	float f_[7][3];
 	float n_[7][3];
-	float tau[6] = {0, 0, 0, 0, 0, 0};
+	float tau_[6] = {0, 0, 0, 0, 0, 0};
 
 	float dr_[6][3];
 	float D_[6][3][3];

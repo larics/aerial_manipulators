@@ -18,11 +18,11 @@ cmanip:
   joint3_velocity_controller:
     type: effort_controllers/JointVelocityController
     joint: link2_to_link3
-    pid: {p: 0.015, i: 0.0, d: 0.0, i_clamp_max: 100, i_clamp_min: -100}
+    pid: {p: 0.05, i: 0.0, d: 0.0, i_clamp_max: 100, i_clamp_min: -100}
   joint4_velocity_controller:
     type: effort_controllers/JointVelocityController
     joint: link3_to_link4
-    pid: {p: 0.008, i: 0.0, d: 0.0, i_clamp_max: 100, i_clamp_min: -100}
+    pid: {p: 0.02, i: 0.0, d: 0.0, i_clamp_max: 100, i_clamp_min: -100}
   joint5_velocity_controller:
     type: effort_controllers/JointVelocityController
     joint: link4_to_link5

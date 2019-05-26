@@ -34,5 +34,11 @@
   <node name="joint_position_control" pkg="aerial_manipulators" type="joint_position_control" output="screen"  ns="$(arg namespace)" args="joint1_position_controller joint2_position_controller joint3_position_controller joint4_position_controller joint5_position_controller">
     <param name="param_file" value="$(find aerial_manipulators)/config/cmanip_position_control.yaml"/>
   </node>
+<!--
+  <node name="velocitytrack" pkg="aerial_manipulators" type="velocitytrack" output="screen"  ns="$(arg namespace)">
+  </node>
+-->
+  <node name="WPManipulatorForceEstimation" pkg="aerial_manipulators" type="WPManipulatorForceEstimation" output="screen"  ns="$(arg namespace)">
+  </node>
 
 </launch>
