@@ -74,9 +74,9 @@ class CManip:
 
                 TW5 = world2tool(TW0, T01, T12, T23, T34, T4H, TH5)
 
-                self.check.x = TW5[0,3] - self.poseEnd.pose[6].position.x
-                self.check.y = TW5[1,3] - self.poseEnd.pose[6].position.y
-                self.check.z = TW5[2,3] - self.poseEnd.pose[6].position.z
+                #self.check.x = TW5[0,3] - self.poseEnd.pose[6].position.x
+                #self.check.y = TW5[1,3] - self.poseEnd.pose[6].position.y
+                #self.check.z = TW5[2,3] - self.poseEnd.pose[6].position.z
 
                 #print(TW5)
 
