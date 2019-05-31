@@ -134,8 +134,9 @@ int ManipulatorControl::init(ros::NodeHandle *n)
 }
 
 int ManipulatorControl::init() 
-{
-	//n_ = ros::NodeHandle();
+{	
+	n2_ = ros::NodeHandle();
+	n_ = &n2_;
 
 	is_initialized_ = 0;
 
@@ -205,6 +206,25 @@ geometry_msgs::PoseStamped ManipulatorControl::getEndEffectorPosition(void)
 	tf::poseEigenToMsg(end_effector_state, end_effector_pose.pose);
 
 	return end_effector_pose;
+}
+
+Eigen::Affine3d ManipulatorControl::getEndEffectorPosition(std::vector<double> q)
+{
+	geometry_msgs::PoseStamped end_effector_pose;
+
+	int number_of_links = (*kinematic_model_)->getLinkModels().size();
+	std::string end_effector_name = (*kinematic_model_)->getLinkModels()[number_of_links-1]->getName();
+
+	(*kinematic_state_)->setJointGroupPositions(joint_model_group_, q);
+	const Eigen::Affine3d &end_effector_state = (*kinematic_state_)->getGlobalLinkTransform(end_effector_name);
+
+	end_effector_pose.header.stamp = ros::Time::now();
+	end_effector_pose.header.frame_id = (*kinematic_model_)->getModelFrame().c_str();
+	end_effector_pose.header.frame_id = (*kinematic_model_)->getModelFrame();
+
+	tf::poseEigenToMsg(end_effector_state, end_effector_pose.pose);
+
+	return end_effector_state;
 }
 
 std::vector<double> ManipulatorControl::getJointSetpoints(void)

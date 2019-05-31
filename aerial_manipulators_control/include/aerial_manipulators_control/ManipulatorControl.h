@@ -21,6 +21,7 @@ public:
 	std::vector<double> calculateJointSetpoints(geometry_msgs::Pose end_effector_pose);
 	std::vector<double> calculateJointSetpoints(geometry_msgs::Pose end_effector_pose, bool &found_ik_flag);
 	geometry_msgs::PoseStamped getEndEffectorPosition(void);
+	Eigen::Affine3d getEndEffectorPosition(std::vector<double> q);
 	geometry_msgs::Pose getEndEffectorReferencePosition(void);
 	void LoadParameters(std::string file);
 	void publishJointSetpoints(std::vector<double> q);
@@ -40,6 +41,7 @@ private:
 	ros::Subscriber joint_state_sub_ros_, control_mode_sub_ros_;
 	ros::Subscriber end_effector_pose_sub_ros_;
 	ros::NodeHandle *n_;
+	ros::NodeHandle n2_;
 
 	robot_model_loader::RobotModelLoader *robot_model_loader_;;
 	robot_state::JointModelGroup* joint_model_group_;
