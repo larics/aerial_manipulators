@@ -26,6 +26,7 @@ public:
 	void publishJointSetpoints(std::vector<double> q);
 	std::vector<double> getJointSetpoints(void);
 	int init(ros::NodeHandle *n);
+	int init();
 	int getControlMode(void);
 	bool isStarted(void);
 private:

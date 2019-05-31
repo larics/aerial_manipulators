@@ -32,6 +32,7 @@ catkin_package(
    INCLUDE_DIRS include
    CATKIN_DEPENDS roscpp rospy roslib rospack moveit_core moveit_visual_tools moveit_ros_planning_interface sensor_msgs eigen_conversions
    DEPENDS EIGEN3
+   LIBRARIES ManipulatorControl
 )
 
 include_directories(SYSTEM ${Boost_INCLUDE_DIR} ${EIGEN3_INCLUDE_DIRS})

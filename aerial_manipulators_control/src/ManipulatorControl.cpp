@@ -97,6 +97,50 @@ int ManipulatorControl::init(ros::NodeHandle *n)
 
 	robot_model_loader_ = new robot_model_loader::RobotModelLoader(robot_model_name_);
 	kinematic_model_ = new robot_state::RobotModelPtr();
+
+	*kinematic_model_ = robot_model_loader_->getModel();
+
+	if (*kinematic_model_) {
+		joint_model_group_ = (*kinematic_model_)->getJointModelGroup(joint_model_group_name_);
+
+		if (joint_model_group_) {
+			kinematic_state_ = new robot_state::RobotStatePtr(new robot_state::RobotState(*kinematic_model_));
+			(*kinematic_state_)->setToDefaultValues();
+
+			const std::vector<std::string> &joint_names = joint_model_group_->getActiveJointModelNames();
+
+			number_of_joints_ = joint_names.size();
+
+			manipulator_q_set_point_sub_ros_ = new ros::Subscriber[number_of_joints_];
+			q_setpoint_ = std::vector<double>(number_of_joints_, 0); 
+			q_torque_meas_ = new float[number_of_joints_];
+			q_pos_meas_ = std::vector<double>(number_of_joints_, 0);
+
+			for (int i = 0; i < joint_names.size(); i++) {
+				manipulator_q_set_point_sub_ros_[i] = n_->subscribe<std_msgs::Float32>(joint_names[i], 1, boost::bind(&ManipulatorControl::qCbRos, this, _1, i));
+			}
+
+			joint_state_sub_ros_ = n_->subscribe("joint_states", 1, &ManipulatorControl::jointControllerStateCbRos, this);
+			control_mode_sub_ros_ = n_->subscribe("control_mode", 1, &ManipulatorControl::controlModeCbRos, this);
+			end_effector_pose_sub_ros_ = n_->subscribe("end_effector/pose_ref", 1, &ManipulatorControl::endEffectorPoseRefCbRos, this);
+
+			dynamixel_sepoint_ros_pub_ = n_->advertise<trajectory_msgs::JointTrajectory>("joint_trajectory", 1);
+
+			is_initialized_ = 1;
+		}
+	}
+
+	return is_initialized_;
+}
+
+int ManipulatorControl::init() 
+{
+	//n_ = ros::NodeHandle();
+
+	is_initialized_ = 0;
+
+	robot_model_loader_ = new robot_model_loader::RobotModelLoader(robot_model_name_);
+	kinematic_model_ = new robot_state::RobotModelPtr();
 	
 	*kinematic_model_ = robot_model_loader_->getModel();
 
@@ -132,6 +176,7 @@ int ManipulatorControl::init(ros::NodeHandle *n)
 
 	return is_initialized_;
 }
+
 
 void ManipulatorControl::endEffectorPoseRefCbRos(const geometry_msgs::PoseStamped &msg)
 {
