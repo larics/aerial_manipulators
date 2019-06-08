@@ -48,16 +48,16 @@ Eigen::Matrix<float, 6, 5> WPManipulatorForceEstimation::jacobian(float *q) {
 
 	Eigen::Matrix<float, 6, 5> jacob;
 
-	jacob(0, 0) = 0.072489*cos(q[1] + q[2])*sin(q[3])*sin(q[4]) - 0.12249*cos(q[1]) - 0.04526*cos(q[3] + q[4] + q[5])*cos(q[1] + q[2]) - 0.075511*cos(q[1] + q[2])*cos(q[3]) - 0.072489*cos(q[1] + q[2])*cos(q[3])*cos(q[4]) - 0.1365*cos(q[1] + q[2]);
-	jacob(0, 1) = -cos(q[1] + q[2])*(0.04526 * cos(q[3] + q[4] + q[5]) + 0.072489 * cos(q[3] + q[4]) + 0.075511 * cos(q[3]) + 0.1365);
-	jacob(0, 2) = sin(q[1] + q[2])*(0.04526 * sin(q[3] + q[4] + q[5]) + 0.072489 * sin(q[3] + q[4]) + 0.075511 * sin(q[3]));
-	jacob(0, 3) = sin(q[1] + q[2])*(0.04526 * sin(q[3] + q[4] + q[5]) + 0.072489 * sin(q[3] + q[4]));
-	jacob(0, 4) = 0.04526 * sin(q[3] + q[4] + q[5])*sin(q[1] + q[2]);
+  jacob(0, 0) = 0.072489*cos(q[1] + q[2])*sin(q[3])*sin(q[4]) - 0.12249*cos(q[1]) - 0.04526*cos(q[3] + q[4] + q[5])*cos(q[1] + q[2]) - 0.075511*cos(q[1] + q[2])*cos(q[3]) - 0.072489*cos(q[1] + q[2])*cos(q[3])*cos(q[4]) - 0.1365*cos(q[1] + q[2]);
+	jacob(0, 1) = 0.072489*cos(q[1] + q[2])*sin(q[3])*sin(q[4]) - 0.04526*cos(q[3] + q[4] + q[5])*cos(q[1] + q[2]) - 0.075511*cos(q[1] + q[2])*cos(q[3]) - 0.072489*cos(q[1] + q[2])*cos(q[3])*cos(q[4]) - 0.1365*cos(q[1] + q[2]);
+	jacob(0, 2) = 0.04526*sin(q[3] + q[4] + q[5])*sin(q[1] + q[2]) + 0.075511*sin(q[1] + q[2])*sin(q[3]) + 0.072489*sin(q[1] + q[2])*cos(q[3])*sin(q[4]) + 0.072489*sin(q[1] + q[2])*cos(q[4])*sin(q[3]);
+	jacob(0, 3) = 0.04526*sin(q[3] + q[4] + q[5])*sin(q[1] + q[2]) + 0.072489*sin(q[1] + q[2])*cos(q[3])*sin(q[4]) + 0.072489*sin(q[1] + q[2])*cos(q[4])*sin(q[3]);
+	jacob(0, 4) = 0.04526*sin(q[3] + q[4] + q[5])*sin(q[1] + q[2]);
 
 	jacob(1, 0) = 0.072489*sin(q[1] + q[2])*sin(q[3])*sin(q[4]) - 0.12249*sin(q[1]) - 0.04526*cos(q[3] + q[4] + q[5])*sin(q[1] + q[2]) - 0.075511*sin(q[1] + q[2])*cos(q[3]) - 0.072489*sin(q[1] + q[2])*cos(q[3])*cos(q[4]) - 0.1365*sin(q[1] + q[2]);
-	jacob(1, 1) = -sin(q[1] + q[2])*(0.4526 * cos(q[3] + q[4] + q[5]) + 0.72489 * cos(q[3] + q[4]) + 0.75511 * cos(q[3]) + 1.365);
-	jacob(1, 2) = -cos(q[1] + q[2])*(0.04526 * sin(q[3] + q[4] + q[5]) + 0.072489 * sin(q[3] + q[4]) + 0.075511 * sin(q[3]));
-	jacob(1, 3) = -cos(q[1] + q[2])*(0.04526 * sin(q[3] + q[4] + q[5]) + 0.072489 * sin(q[3] + q[4]));
+	jacob(1, 1) = 0.072489*sin(q[1] + q[2])*sin(q[3])*sin(q[4]) - 0.04526*cos(q[3] + q[4] + q[5])*sin(q[1] + q[2]) - 0.075511*sin(q[1] + q[2])*cos(q[3]) - 0.072489*sin(q[1] + q[2])*cos(q[3])*cos(q[4]) - 0.1365*sin(q[1] + q[2]);
+	jacob(1, 2) = -0.04526*sin(q[3] + q[4] + q[5])*cos(q[1] + q[2]) - 0.075511*cos(q[1] + q[2])*sin(q[3]) - 0.072489*cos(q[1] + q[2])*cos(q[3])*sin(q[4]) - 0.072489*cos(q[1] + q[2])*cos(q[4])*sin(q[3]);
+	jacob(1, 3) = -0.04526*sin(q[3] + q[4] + q[5])*cos(q[1] + q[2]) - 0.072489*cos(q[1] + q[2])*cos(q[3])*sin(q[4]) - 0.072489*cos(q[1] + q[2])*cos(q[4])*sin(q[3]);
 	jacob(1, 4) = -0.04526*sin(q[3] + q[4] + q[5])*cos(q[1] + q[2]);
 
 	jacob(2, 0) = 0;
@@ -68,15 +68,15 @@ Eigen::Matrix<float, 6, 5> WPManipulatorForceEstimation::jacobian(float *q) {
 
 	jacob(3, 0) = 0;
 	jacob(3, 1) = 0;
-	jacob(3, 2) = -cos(q[1] + q[2]);
-	jacob(3, 3) = -cos(q[1] + q[2]);
-	jacob(3, 4) = -cos(q[1] + q[2]);
+	jacob(3, 2) = -1.0*cos(q[1] + q[2]);
+	jacob(3, 3) = -1.0*cos(q[1] + q[2]);
+	jacob(3, 4) = -1.0*cos(q[1] + q[2]);
 
 	jacob(4, 0) = 0;
 	jacob(4, 1) = 0;
-	jacob(4, 2) = -sin(q[1] + q[2]);
-	jacob(4, 3) = -sin(q[1] + q[2]);
-	jacob(4, 4) = -sin(q[1] + q[2]);
+	jacob(4, 2) = -1.0*sin(q[1] + q[2]);
+	jacob(4, 3) = -1.0*sin(q[1] + q[2]);
+	jacob(4, 4) = -1.0*sin(q[1] + q[2]);
 
 	jacob(5, 0) = 1;
 	jacob(5, 1) = 1;
