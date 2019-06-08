@@ -190,9 +190,6 @@
       <origin xyz="${a4} 0 0" rpy="0 0 0"/>
       <limit upper="2.3" lower="-2.3" effort="10000000" velocity="20"/>
       <axis xyz="0 0 1" />
-      <sensor name="force_torque" type="force_torque">
-        <update_rate>30</update_rate>
-      </sensor>
     </joint>
 <!--       <limit upper="2.3" lower="-2.3" effort="10000000" velocity="20"/> -->
 <!--
@@ -223,32 +220,131 @@
   </xacro:macro>
 
 
-<!--
-  <xacro:macro name="ft_sensor_gazebo" params="parent name type">
 
-    <gazebo reference="${name}_${type}_base">
-      <gravity>true</gravity>
-    </gazebo>
+  <xacro:macro name="force_sensor"
+    params="*origin">
 
-    <gazebo reference="${name}_${type}_measure">
-      <gravity>true</gravity>
-    </gazebo>
+    <!--_____________________________________________________________-->
+    <!--LINK1 force sensor stand-->
+    <!--_____________________________________________________________-->
+    <link name='link_force_sensor_stand'>
 
-    <gazebo reference="${parent}_${name}_measure_joint">
-      <provideFeedback>true</provideFeedback>
-    </gazebo>
+      <inertial>
+        <mass value="0.2" />
+        <origin rpy="0 0 0" xyz="0 0.046818651 0"/>
+        <inertia
+          ixx="0.023434322" ixy="0" ixz="0.0"
+          iyx="0" iyy="0.001547123" iyz="0"
+          izx="0.0" izy="0" izz="0.023434322"/>
+      </inertial>
 
-    <gazebo>
-        <plugin name="${name}_ft_sensor" filename="libgazebo_ros_ft_sensor.so">
-        <updateRate>1000.0</updateRate>
-        <topicName>${parent}_${name}/ft_sensor_topic</topicName>
-        <jointName>${parent}_${name}_measure_joint</jointName>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://aerial_manipulators/meshes/wp_manipulator/forcesensor_stand.dae"
+            scale="0.1 0.1 0.1" />
+        </geometry>
+      </visual>
 
-        </plugin>
-    </gazebo>
+      <!--collision name='collision'>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://mmuav_description/meshes/forcesensor_stand.dae"
+            scale="1 1 1" />
+        </geometry>
+      </collision-->
+    </link>
+    <!--_____________________________________________________________-->
+    <!--LINK2 force sensor mount bottom-->
+    <!--_____________________________________________________________-->
+    <link name='link_force_sensor_bottom_mount'>
 
+      <inertial>
+        <mass value="0.005" />
+        <origin rpy="0 0 0" xyz="0.0 0.000206111 0.0"/>
+        <inertia
+          ixx="0.000002139" ixy="0" ixz="0.0"
+          iyx="0" iyy="0.000004241" iyz="0"
+          izx="0.0" izy="0" izz="0.000002139"/>
+      </inertial>
+
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://aerial_manipulators/meshes/wp_manipulator/forcesensor_mount_bottom.dae"
+            scale="0.1 0.1 0.1" />
+        </geometry>
+      </visual>
+
+      <!--collision name='collision'>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://mmuav_description/meshes/forcesensor_mount_bottom.dae"
+            scale="1 1 1" />
+        </geometry>
+      </collision-->
+    </link>
+    <!--_____________________________________________________________-->
+    <!--LINK2 force sensor mount top-->
+    <!--_____________________________________________________________-->
+    <link name='link_force_sensor_top_mount'>
+
+      <inertial>
+        <mass value="0.0080" />
+        <origin rpy="0 0 0" xyz="0 0 -0.002998408"/>
+        <inertia
+          ixx="0.000059994" ixy="0" ixz="0.0"
+          iyx="0" iyy="0.000059994" iyz="0"
+          izx="0.0" izy="0" izz="0.000119615"/>
+      </inertial>
+
+      <!--0.01903151 0.01661061 0.02154592-->
+
+      <visual>
+        <origin xyz="-0.0001903 -0.0001661 -0.0005153" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://aerial_manipulators/meshes/wp_manipulator/forcesensor_mount_top.dae"
+            scale="0.1 0.1 0.1" />
+        </geometry>
+      </visual>
+
+      <collision name='collision'>
+        <origin xyz="-0.001903 -0.001661 -0.005153" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://aerial_manipulators/meshes/wp_manipulator/forcesensor_mount_top.dae"
+            scale="0.1 0.1 0.1" />
+        </geometry>
+      </collision>
+    </link>
+
+    <!--_____________________________________________________________-->
+    <!--JOINT1 FIXED force_sensor_stand-->
+    <!--_____________________________________________________________-->
+    <joint name="joint_force_sensor_stand" type="fixed">
+        <xacro:insert_block name="origin"/>
+        <parent link="link5"/>
+        <child link="link_force_sensor_stand"/>
+    </joint>
+    <!--_____________________________________________________________-->
+    <!--JOINT2 FIXED joint_force_sensor_mount_bottom-->
+    <!--_____________________________________________________________-->
+    <joint name="joint_force_sensor_mount_bottom" type="fixed">
+        <origin xyz="0 1.003 0" rpy="${pi} 0 0" />
+        <parent link="link_force_sensor_stand"/>
+        <child link="link_force_sensor_bottom_mount"/>
+    </joint>
+    <!--_____________________________________________________________-->
+    <!--JOINT2 FIXED force_sensor_mount_top-->
+    <!--_____________________________________________________________-->
+    <joint name="joint_force_sensor_mount_top" type="prismatic">
+        <origin xyz="0 0 0" rpy="${-pi/2} 0 0" />
+        <parent link="link_force_sensor_bottom_mount"/>
+        <child link="link_force_sensor_top_mount"/>
+        <axis xyz="0 0 1" />
+        <limit effort="0" velocity="0" lower="0" upper="0" />
+    </joint>
   </xacro:macro>
--->
+
 
 
 </robot>

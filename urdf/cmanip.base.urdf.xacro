@@ -34,10 +34,8 @@
     joint_name="link4_to_link5">
   </xacro:transmisija>
 <!--
-  <xacro:ft_sensor_gazebo
-    name="ftSensor"
-    type="force"
-    parent="link5">
-  </xacro:ft_sensor_gazebo>
+  <xacro:force_sensor>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </xacro:force_sensor>
 -->
 </robot>
