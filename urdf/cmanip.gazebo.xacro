@@ -24,10 +24,10 @@
   <implicitSpringDamper>true</implicitSpringDamper>
   <provideFeedback>true</provideFeedback>
 </gazebo>
-<!--
+
 <gazebo>
   <plugin name="ft_sensor" filename="libgazebo_ros_ft_sensor.so">
-    <updateRate>1000.0</updateRate>
+    <updateRate>10.0</updateRate>
     <robotNamespace>$(arg name)</robotNamespace>
     <topicName>ft_sensor</topicName>
     <jointName>joint_force_sensor_mount_top</jointName>
@@ -38,5 +38,5 @@
     </noise>
   </plugin>
 </gazebo>
--->
+
 </robot>
