@@ -90,10 +90,12 @@ Eigen::Matrix<float, 6, 5> WPManipulatorForceEstimation::jacobian(float *q) {
 
 WPManipulatorForceEstimation::WPManipulatorForceEstimation(void) {
 	sub_ = nh_.subscribe("joint_states", 1, &WPManipulatorForceEstimation::joint_states_Callback, this);
+  sub2_ = nh_.subscribe("ft_sensor", 1, &WPManipulatorForceEstimation::ft_sensor_Callback, this);
 	rate_ = 10;
 	pub1_ = nh_.advertise<aerial_manipulators::float6>("force", 1);
   pub2_ = nh_.advertise<aerial_manipulators::float5>("dif_torque", 1);
   pub3_ = nh_.advertise<aerial_manipulators::float5>("est_torque", 1);
+  pub4_ = nh_.advertise<geometry_msgs::Vector3>("force_corrected", 1);
 }
 
 WPManipulatorForceEstimation::~WPManipulatorForceEstimation(void) {}
@@ -104,6 +106,13 @@ void WPManipulatorForceEstimation::joint_states_Callback(const sensor_msgs::Join
 		q_pos_[i+1] = msg.position[i];
 		tauki_[i] = msg.effort[i];
 	}
+}
+
+void WPManipulatorForceEstimation::ft_sensor_Callback(const geometry_msgs::WrenchStamped &msg)
+{
+	f_sensor_[0] = msg.wrench.force.x;
+  f_sensor_[1] = msg.wrench.force.y;
+  f_sensor_[2] = msg.wrench.force.z;
 }
 
 
@@ -149,6 +158,12 @@ void WPManipulatorForceEstimation::run(void)
     torq.d = tor(3, 0);
     torq.e = tor(4, 0);
     pub3_.publish(torq);
+
+    geometry_msgs::Vector3 force_corr;
+    force_corr.x = f_sensor_[2];
+    force_corr.y = - f_sensor_[0];
+    force_corr.z = f_sensor_[1];
+    pub4_.publish(force_corr);
 
 		loop_rate.sleep();
 		++count;

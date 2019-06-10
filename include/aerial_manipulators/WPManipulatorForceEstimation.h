@@ -16,6 +16,7 @@
 #include <aerial_manipulators/WPManipulatorInverseDynamics.h>
 #include <aerial_manipulators/float5.h>
 #include <aerial_manipulators/float6.h>
+#include <geometry_msgs/WrenchStamped.h>
 
 
 
@@ -23,9 +24,11 @@
 class WPManipulatorForceEstimation {
 	ros::NodeHandle nh_;
 	ros::Subscriber sub_;
+	ros::Subscriber sub2_;
 	ros::Publisher pub1_;
 	ros::Publisher pub2_;
 	ros::Publisher pub3_;
+	ros::Publisher pub4_;
 
 	sensor_msgs::JointState js_;
 	aerial_manipulators::float6 force_;
@@ -34,6 +37,7 @@ class WPManipulatorForceEstimation {
 	int rate_;
 	float tauget_[6];
 	float tauki_[5];
+	float f_sensor_[3];
 
 	float massh_[6] = { 0.0, 0.01715, 0.10663, 0.17449, 0.01133, 0.08200 };
 
@@ -57,6 +61,7 @@ public:
 	Eigen::Matrix<float, 6, 5> jacobian(float *q);
 
 	void joint_states_Callback(const sensor_msgs::JointState& msg);
+	void ft_sensor_Callback(const geometry_msgs::WrenchStamped& msg);
 
 	void run(void);
 

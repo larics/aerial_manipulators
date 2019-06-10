@@ -18,7 +18,7 @@
     </plugin>
   </gazebo>
 
-<gazebo reference="joint_force_sensor_mount_top">
+<gazebo reference="link4_to_link5">
   <stopCfm>0.08</stopCfm>
   <stopErp>0.2</stopErp>
   <implicitSpringDamper>true</implicitSpringDamper>
@@ -27,10 +27,10 @@
 
 <gazebo>
   <plugin name="ft_sensor" filename="libgazebo_ros_ft_sensor.so">
-    <updateRate>10.0</updateRate>
+    <updateRate>100.0</updateRate>
     <robotNamespace>$(arg name)</robotNamespace>
     <topicName>ft_sensor</topicName>
-    <jointName>joint_force_sensor_mount_top</jointName>
+    <jointName>link4_to_link5</jointName>
     <noise>
       <type>gaussian</type>
       <mean>0.0</mean>
