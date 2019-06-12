@@ -123,23 +123,33 @@
 
 <!--
     <link name="endEffector">
+
       <inertial>
         <mass value="0.00001" />
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin rpy="0 0 0" xyz="0 0 -0.02998408"/>
         <inertia
-          ixx="0.00001" ixy="0" ixz="0"
-          iyx="0" iyy="0.00001" iyz="0"
-          izx="0" izy="0" izz="0.00001"/>
+          ixx="0.000001" ixy="0" ixz="0.0"
+          iyx="0" iyy="0.000001" iyz="0"
+          izx="0.0" izy="0" izz="0.000001"/>
       </inertial>
 
-      <visual>
-        <geometry>
-          <sphere radius="0.005"/>
-        </geometry>
-      </visual>
+    <visual>
+      <origin xyz="-0.001903 -0.001661 -0.005153" rpy="${-pi/2} 0 ${-pi/2}" />
+      <geometry>
+        <mesh filename="package://aerial_manipulators/meshes/wp_manipulator/forcesensor_mount_top.dae"
+          scale="0.1 0.1 0.1" />
+      </geometry>
+    </visual>
+
+    <collision name='collision'>
+      <origin xyz="-0.001903 -0.001661 -0.005153" rpy="${-pi/2} 0 ${-pi/2}"/>
+      <geometry>
+        <mesh filename="package://aerial_manipulators/meshes/wp_manipulator/forcesensor_mount_top.dae"
+          scale="0.1 0.1 0.1" />
+      </geometry>
+    </collision>
     </link>
 -->
-
 
 
 
@@ -196,7 +206,7 @@
     <joint name="link5_to_ef" type="revolute">
       <parent link="link5"/>
       <child link="endEffector"/>
-      <origin xyz="${d5} 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
+      <origin xyz="${d5} 0 0" rpy="0 0 0"/>
       <limit upper="0" lower="0" effort="10000000" velocity="20"/>
       <axis xyz="0 0 1" />
     </joint>

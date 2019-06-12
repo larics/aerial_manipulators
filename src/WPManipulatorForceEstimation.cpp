@@ -22,6 +22,15 @@ pseudoinverse(const MatT &mat, typename MatT::Scalar tolerance = typename MatT::
     return svd.matrixV() * singularValuesInv * svd.matrixU().adjoint();
 }
 
+Eigen::Matrix4d transformCalculate(float thetak, float dk, float ak, float alphak, float theta0k) {
+	Eigen::Matrix4d T(4, 4);
+	T << cos(thetak + theta0k), -cos(alphak) * sin(thetak + theta0k), sin(alphak) * sin(thetak + theta0k), ak * cos(thetak + theta0k),
+		sin(thetak + theta0k), cos(alphak) * cos(thetak + theta0k), -sin(alphak) * cos(thetak + theta0k), ak * sin(thetak + theta0k),
+		0, sin(alphak), cos(alphak), dk,
+		0, 0, 0, 1;
+	return T;
+}
+
 Eigen::Matrix<float, 6, 1> WPManipulatorForceEstimation::forceEstimate(float *q, float *v0, float *w0, float dtime) {
 
 	WPManipulatorInverseDynamics WPMID(massh_, dch_, D_h_);
@@ -159,10 +168,46 @@ void WPManipulatorForceEstimation::run(void)
     torq.e = tor(4, 0);
     pub3_.publish(torq);
 
+    // Calculation of transformation matrices using Eigne::Matrix4d
+    Eigen::Matrix4d T00(4, 4), T01(4, 4), T12(4, 4), T23(4, 4), T34(4, 4), T45(4, 4), T56(4, 4);
+
+    T00 << 1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1, 0,
+      0, 0, 0, 1;
+
+    T01 = transformCalculate(q_pos_[1], d_[0], a_[0], alpha_[0], theta0_[0]);
+  	T12 = transformCalculate(q_pos_[2], d_[1], a_[1], alpha_[1], theta0_[1]);
+  	T23 = transformCalculate(q_pos_[3], d_[2], a_[2], alpha_[2], theta0_[2]);
+  	T34 = transformCalculate(q_pos_[4], d_[3], a_[3], alpha_[3], theta0_[3]);
+  	T45 = transformCalculate(q_pos_[5], d_[4], a_[4], 0, 0);
+  	//T56 = transformCalculate(0, d_[5], a_[5], alpha_[5], theta0_[5]);
+
+    Eigen::Matrix4d T02(4, 4), T03(4, 4), T04(4, 4), T05(4, 4);
+    T02 = T01 * T12;
+    T03 = T02 * T23;
+    T04 = T03 * T34;
+    //T05 = T04 * T45 * T56;
+    T05 = T04 * T45;
+
+    Eigen::Matrix<double, 3, 1> gravity_base, gravity_end_effector, sensor_force, sensor_force_corrected;
+    gravity_base << 0, -9.81*0.08, 0;
+    Eigen::Matrix3d R05(3, 3);
+    R05 << T05(0, 0), T05(0, 1), T05(0, 2),
+            T05(1, 0), T05(1, 1), T05(1, 2),
+            T05(2, 0), T05(2, 1), T05(2, 2);
+    gravity_end_effector = pseudoinverse(R05) * gravity_base;
+
     geometry_msgs::Vector3 force_corr;
-    force_corr.x = f_sensor_[2];
-    force_corr.y = - f_sensor_[0];
-    force_corr.z = f_sensor_[1];
+    sensor_force(0, 0) = f_sensor_[0] - gravity_end_effector(0,0);
+    sensor_force(1, 0) = f_sensor_[1] - gravity_end_effector(1,0);
+    sensor_force(2, 0) = f_sensor_[2] - gravity_end_effector(2,0);
+
+    sensor_force_corrected = R05 * sensor_force;
+
+    force_corr.x = -sensor_force_corrected(0, 0);
+    force_corr.y = -sensor_force_corrected(1, 0);
+    force_corr.z = -sensor_force_corrected(2, 0);
     pub4_.publish(force_corr);
 
 		loop_rate.sleep();
