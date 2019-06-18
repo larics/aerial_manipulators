@@ -227,6 +227,28 @@ Eigen::Affine3d ManipulatorControl::getEndEffectorPosition(std::vector<double> q
 	return end_effector_state;
 }
 
+std::vector<Eigen::Affine3d> ManipulatorControl::getLinkPositions(Eigen::VectorXd q)
+{
+	std::vector<Eigen::Affine3d> link_positions;
+	geometry_msgs::PoseStamped end_effector_pose;
+
+	// Get number of links
+	int number_of_links = (*kinematic_model_)->getLinkModels().size();
+
+	// Loop through all links
+	for (int i=0; i<number_of_links; i++){
+		std::string link_name = (*kinematic_model_)->getLinkModels()[i]->getName();
+		std::cout << link_name << std::endl;
+
+		(*kinematic_state_)->setJointGroupPositions(joint_model_group_, q);
+		const Eigen::Affine3d &link_state = (*kinematic_state_)->getGlobalLinkTransform(link_name);
+
+		link_positions.push_back(link_state);
+	}
+
+	return link_positions;
+}
+
 std::vector<double> ManipulatorControl::getJointSetpoints(void)
 {
 	return q_setpoint_; 	

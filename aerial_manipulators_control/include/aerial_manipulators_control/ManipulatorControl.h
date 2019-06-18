@@ -22,6 +22,7 @@ public:
 	std::vector<double> calculateJointSetpoints(geometry_msgs::Pose end_effector_pose, bool &found_ik_flag);
 	geometry_msgs::PoseStamped getEndEffectorPosition(void);
 	Eigen::Affine3d getEndEffectorPosition(std::vector<double> q);
+	std::vector<Eigen::Affine3d> getLinkPositions(Eigen::VectorXd q);
 	geometry_msgs::Pose getEndEffectorReferencePosition(void);
 	void LoadParameters(std::string file);
 	void publishJointSetpoints(std::vector<double> q);
