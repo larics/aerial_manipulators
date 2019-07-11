@@ -238,7 +238,7 @@ std::vector<Eigen::Affine3d> ManipulatorControl::getLinkPositions(Eigen::VectorX
 	// Loop through all links
 	for (int i=0; i<number_of_links; i++){
 		std::string link_name = (*kinematic_model_)->getLinkModels()[i]->getName();
-		std::cout << link_name << std::endl;
+		//std::cout << link_name << std::endl;
 
 		(*kinematic_state_)->setJointGroupPositions(joint_model_group_, q);
 		const Eigen::Affine3d &link_state = (*kinematic_state_)->getGlobalLinkTransform(link_name);
