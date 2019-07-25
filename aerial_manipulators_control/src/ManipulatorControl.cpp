@@ -348,3 +348,37 @@ std::vector<double> ManipulatorControl::calculateJointSetpoints(geometry_msgs::P
 	found_ik_flag = found_ik;
 	return q;
 }
+
+Eigen::VectorXd ManipulatorControl::calculateJointSetpoints(Eigen::Affine3d end_effector_transform, bool &found_ik_flag)
+{
+	std::vector<double> q_vect(number_of_joints_, 0);
+
+	geometry_msgs::Pose end_effector_pose;
+	end_effector_pose.position.x = end_effector_transform.translation()[0];
+	end_effector_pose.position.y = end_effector_transform.translation()[1];
+	end_effector_pose.position.z = end_effector_transform.translation()[2];
+	end_effector_pose.orientation.x = Eigen::Quaterniond(end_effector_transform.rotation()).x();
+	end_effector_pose.orientation.y = Eigen::Quaterniond(end_effector_transform.rotation()).y();
+	end_effector_pose.orientation.z = Eigen::Quaterniond(end_effector_transform.rotation()).z();
+	end_effector_pose.orientation.w = Eigen::Quaterniond(end_effector_transform.rotation()).w();
+
+	bool found_ik = (*kinematic_state_)->setFromIK(joint_model_group_, end_effector_pose, 10, 0.1);
+
+	if (found_ik)
+		(*kinematic_state_)->copyJointGroupPositions(joint_model_group_, q_vect);
+	else
+	{
+		ROS_INFO("Did not find IK solution");
+
+		for (int i = 0; i < number_of_joints_; i++)
+			q_vect[i] = q_pos_meas_[i];
+	}
+
+	Eigen::VectorXd q(number_of_joints_);
+	for (int i=0; i<number_of_joints_; i++){
+		q(i) = q_vect[i];
+	}
+
+	found_ik_flag = found_ik;
+	return q;
+}
