@@ -363,9 +363,11 @@ Eigen::VectorXd ManipulatorControl::calculateJointSetpoints(Eigen::Affine3d end_
 	end_effector_pose.orientation.w = Eigen::Quaterniond(end_effector_transform.rotation()).w();
 
 	kinematics::KinematicsQueryOptions kinematics_options;
+	kinematics_options.discretization_method = 
+		kinematics::DiscretizationMethods::DiscretizationMethod::ALL_DISCRETIZED;
 	kinematics_options.return_approximate_solution = true;
 
-	bool found_ik = (*kinematic_state_)->setFromIK(joint_model_group_, end_effector_pose, 10, 0.1, 
+	bool found_ik = (*kinematic_state_)->setFromIK(joint_model_group_, end_effector_pose, 10, 0.5, 
 		moveit::core::GroupStateValidityCallbackFn(), kinematics_options);
 
 	if (found_ik)
