@@ -20,11 +20,13 @@ ManipulatorControl::ManipulatorControl(void):
 
 ManipulatorControl::~ManipulatorControl(void) 
 {
-	if (is_initialized_) delete kinematic_state_;
-	delete kinematic_model_;
-	delete robot_model_loader_;
-	delete[] manipulator_q_set_point_sub_ros_;
-	delete[] q_torque_meas_;
+	if (is_initialized_) {
+		delete kinematic_state_;
+		delete kinematic_model_;
+		delete robot_model_loader_;
+		delete[] manipulator_q_set_point_sub_ros_;
+		delete[] q_torque_meas_;
+	}
 }
 
 void ManipulatorControl::setManipulatorName(std::string robot_model_name, std::string joint_model_group_name) 
@@ -130,6 +132,11 @@ int ManipulatorControl::init(ros::NodeHandle *n)
 		}
 	}
 
+	if (!is_initialized_) {
+		delete kinematic_model_;
+		delete robot_model_loader_;
+	}
+
 	return is_initialized_;
 }
 
@@ -173,6 +180,11 @@ int ManipulatorControl::init()
 
 			is_initialized_ = 1;
 		}
+	}
+
+	if (!is_initialized_) {
+		delete kinematic_model_;
+		delete robot_model_loader_;
 	}
 
 	return is_initialized_;

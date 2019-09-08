@@ -217,7 +217,7 @@
     <xacro:property name="a2" value="0.1365"/>
     <xacro:property name="a3" value="0.075511"/>
     <xacro:property name="a4" value="0.072489"/>
-    <xacro:property name="d5" value="0.04526"/>
+    <xacro:property name="d5" value="0.035"/>
     <xacro:property name="theta1" value="${pi/2}"/>
     <xacro:property name="alpha2" value="${-pi/2}"/>
 
@@ -349,7 +349,7 @@
       <parent link="link2"/>
       <child link="link3"/>
       <origin xyz="${a4} 0 0" rpy="0 0 0"/>
-      <limit upper="2.3" lower="-2.3" effort="10000000" velocity="46"/>
+      <limit upper="2.0" lower="-2.0" effort="10000000" velocity="46"/>
       <axis xyz="0 0 1" />
     </joint>
 

@@ -51,13 +51,13 @@
   <!-- Trajectory Execution Functionality -->
   <include ns="move_group" file="$(find wp_manipulator_3R)/launch/trajectory_execution.launch.xml" if="$(arg allow_trajectory_execution)">
     <arg name="moveit_manage_controllers" value="true" />
-    <arg name="moveit_controller_manager" value="wp_manipulator" unless="$(arg fake_execution)"/>
+    <arg name="moveit_controller_manager" value="wp_manipulator_3R" unless="$(arg fake_execution)"/>
     <arg name="moveit_controller_manager" value="fake" if="$(arg fake_execution)"/>
   </include>
 
   <!-- Sensors Functionality -->
   <include ns="move_group" file="$(find wp_manipulator_3R)/launch/sensor_manager.launch.xml" if="$(arg allow_trajectory_execution)">
-    <arg name="moveit_sensor_manager" value="wp_manipulator" />
+    <arg name="moveit_sensor_manager" value="wp_manipulator_3R" />
   </include>
 
   <!-- Start the actual move_group node/action server -->
