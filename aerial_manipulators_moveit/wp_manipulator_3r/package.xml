@@ -1,9 +1,9 @@
 <package>
 
-  <name>wp_manipulator_3R</name>
+  <name>wp_manipulator_3r</name>
   <version>0.3.0</version>
   <description>
-     An automatically generated package with all the configuration and launch files for using the wp_manipulator_3R with the MoveIt! Motion Planning Framework
+     An automatically generated package with all the configuration and launch files for using the wp_manipulator_3r with the MoveIt! Motion Planning Framework
   </description>
   <author email="marko.car@fer.hr">Marko Car</author>
   <maintainer email="marko.car@fer.hr">Marko Car</maintainer>

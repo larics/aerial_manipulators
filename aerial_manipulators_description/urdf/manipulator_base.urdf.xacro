@@ -209,7 +209,7 @@
 
   </xacro:macro>
 
-  <xacro:macro name="wp_manipulator_3R"
+  <xacro:macro name="wp_manipulator_3r"
   params="parent *origin">
 
     <xacro:property name="a0" value="0.04526"/>
@@ -333,7 +333,7 @@
       <child link="link1"/>
       <!-- Adjust Gazebo coordinate system to link1 coordinate system -->
       <origin xyz="0 0 0" rpy="0 0 0"/>
-      <limit upper="1.57" lower="-1.57" effort="10000000" velocity="46"/>
+      <limit upper="1.57" lower="-0.25" effort="10000000" velocity="46"/>
       <axis xyz="0 0 1" />
     </joint>
 
@@ -341,7 +341,7 @@
       <parent link="link1"/>
       <child link="link2"/>
       <origin xyz="0 ${a2} 0" rpy="${-pi/2} 0 ${pi/2}"/>
-      <limit upper="2.0" lower="-2.0" effort="10000000" velocity="46"/>
+      <limit upper="1.57" lower="-1.57" effort="10000000" velocity="46"/>
       <axis xyz="0 0 1" />
     </joint>
 
@@ -349,7 +349,7 @@
       <parent link="link2"/>
       <child link="link3"/>
       <origin xyz="${a4} 0 0" rpy="0 0 0"/>
-      <limit upper="2.0" lower="-2.0" effort="10000000" velocity="46"/>
+      <limit upper="1.57" lower="-1.57" effort="10000000" velocity="46"/>
       <axis xyz="0 0 1" />
     </joint>
 

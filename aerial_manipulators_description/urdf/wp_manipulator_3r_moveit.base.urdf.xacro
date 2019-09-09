@@ -1,15 +1,15 @@
 <?xml version="1.0"?>
 
-<robot name="wp_manipulator_3R" xmlns:xacro="http://ros.org/wiki/xacro">
+<robot name="wp_manipulator_3r" xmlns:xacro="http://ros.org/wiki/xacro">
 
   <xacro:include filename="$(find aerial_manipulators_description)/urdf/manipulator_base.urdf.xacro" />
 
   <link name="world"></link>
 
-  <xacro:wp_manipulator_3R
+  <xacro:wp_manipulator_3r
     parent="world">
-    <origin xyz="0 0 0.035" rpy="${pi/2} 0 ${pi}"/>
-  </xacro:wp_manipulator_3R>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </xacro:wp_manipulator_3r>
 
    <xacro:transmisija
     trans_number="1"

@@ -1,5 +1,5 @@
 controller_list:
-  - name: fake_wp_manipulator_3R_arm_controller
+  - name: fake_wp_manipulator_3r_arm_controller
     joints:
       - joint1
       - joint2
