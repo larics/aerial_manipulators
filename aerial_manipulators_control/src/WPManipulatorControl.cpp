@@ -15,7 +15,7 @@ int main(int argc, char **argv)
 	std::string path = ros::package::getPath("aerial_manipulators_control");
 
 	private_node_handle_.param("rate", rate, int(30));
-	private_node_handle_.param("robot_name", robot_model_name, std::string("wp_manipulator_3R"));
+	private_node_handle_.param("robot_name", robot_model_name, std::string("wp_manipulator_3r"));
 	private_node_handle_.param("joint_group_name", joint_group_name, std::string("wp_manipulator_3r_arm"));
 	private_node_handle_.param("parameters_file", parameters_file, std::string("/config/wp_manipulator_3r_dh_parameters.yaml"));
 
