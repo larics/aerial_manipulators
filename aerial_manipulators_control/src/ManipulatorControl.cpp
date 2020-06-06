@@ -207,6 +207,7 @@ geometry_msgs::PoseStamped ManipulatorControl::getEndEffectorPosition(void)
 
 	int number_of_links = (*kinematic_model_)->getLinkModels().size();
 	std::string end_effector_name = (*kinematic_model_)->getLinkModels()[number_of_links-1]->getName();
+	std::cout<<end_effector_name<<std::endl;
 
 	(*kinematic_state_)->setJointGroupPositions(joint_model_group_, q_pos_meas_);
 	const Eigen::Affine3d &end_effector_state = (*kinematic_state_)->getGlobalLinkTransform(end_effector_name);
