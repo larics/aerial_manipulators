@@ -9,6 +9,7 @@ int main(int argc, char **argv)
 	ros::NodeHandle n;
 	
 	int rate;
+	bool simulation_flag;
 	std::string robot_model_name, joint_group_name;
 	std::string parameters_file;
 

@@ -6,7 +6,6 @@ controller_list:
       - joint3
       - joint4
       - joint5
-      - jointEndEffectorBase
 initial:  # Define initial robot poses.
   - group: wp_manipulator_arm
     pose: home

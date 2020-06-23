@@ -40,6 +40,7 @@ private:
 	void endEffectorPoseRefCbRos(const geometry_msgs::PoseStamped &msg);
 
 	ros::Publisher dynamixel_sepoint_ros_pub_;
+	std::vector<ros::Publisher> joint_setpoint_ros_pub_;
 	ros::Subscriber *manipulator_q_set_point_sub_ros_;
 	ros::Subscriber joint_state_sub_ros_, control_mode_sub_ros_;
 	ros::Subscriber end_effector_pose_sub_ros_;
