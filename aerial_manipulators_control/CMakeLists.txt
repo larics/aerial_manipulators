@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
     sensor_msgs
     dynamic_reconfigure
     dynamixel_workbench_msgs
+    impedance_control
 )
 
 add_definitions(-std=c++11)
@@ -30,7 +31,7 @@ generate_dynamic_reconfigure_options(
 
 catkin_package(
    INCLUDE_DIRS include
-   CATKIN_DEPENDS roscpp rospy roslib rospack moveit_core moveit_visual_tools moveit_ros_planning_interface sensor_msgs eigen_conversions
+   CATKIN_DEPENDS roscpp rospy roslib rospack moveit_core moveit_visual_tools moveit_ros_planning_interface sensor_msgs eigen_conversions impedance_control
    DEPENDS EIGEN3
    LIBRARIES ManipulatorControl
 )
@@ -58,4 +59,4 @@ add_executable(wp_manipulator_control src/WPManipulatorControl.cpp)
 target_link_libraries(wp_manipulator_control ${catkin_LIBRARIES} ManipulatorControl)
 
 add_executable(aerial_manipulator_control src/AerialManipulatorControl.cpp)
-target_link_libraries(aerial_manipulator_control ${catkin_LIBRARIES} yaml-cpp)
+target_link_libraries(aerial_manipulator_control ${catkin_LIBRARIES} yaml-cpp aic impedance_control ManipulatorControl)
