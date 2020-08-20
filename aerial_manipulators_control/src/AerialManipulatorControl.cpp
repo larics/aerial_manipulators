@@ -46,7 +46,93 @@ class AerialManipulatorControl {
             aic_control_z_.setAdaptiveParameterInitialValues(kp0_[2]);
         };
 
-        void fetchEndEffectorPosition() {
+        void getAnglesFromRotationTranslationMatrix(Eigen::Matrix4d &rotationTranslationMatrix, float *angles) {
+          double r11, r21, r31, r32, r33;
+          double roll, pitch, yaw;
+
+          r11 = rotationTranslationMatrix(0,0);
+          r21 = rotationTranslationMatrix(1,0);
+          r31 = rotationTranslationMatrix(2,0);
+          r32 = rotationTranslationMatrix(2,1);
+          r33 = rotationTranslationMatrix(2,2);
+
+          roll = atan2(r32, r33);
+          pitch = atan2(-r31, sqrt(r32*r32 + r33*r33));
+          yaw = atan2(r21, r11);
+
+          angles[0] = roll;
+          angles[1] = pitch;
+          angles[2] = yaw;
+        };
+
+        void getRotationTranslationMatrix(Eigen::Matrix4d &rotationTranslationMatrix, float *orientationEuler, float *position) {
+            float r11, r12, r13, t1, r21, r22, r23, t2;
+            float r31, r32, r33, t3;
+
+            float x, y, z;
+
+            x = orientationEuler[0];
+            y = orientationEuler[1];
+            z = orientationEuler[2];
+
+            r11 = cos(y)*cos(z);
+
+            r12 = cos(z)*sin(x)*sin(y) - cos(x)*sin(z);
+
+            r13 = sin(x)*sin(z) + cos(x)*cos(z)*sin(y);
+
+            r21 = cos(y)*sin(z);
+
+            r22 = cos(x)*cos(z) + sin(x)*sin(y)*sin(z);
+
+            r23 = cos(x)*sin(y)*sin(z) - cos(z)*sin(x);
+
+            r31 = -sin(y);
+
+            r32 = cos(y)*sin(x);
+
+            r33 = cos(x)*cos(y);
+
+            t1 = position[0];
+            t2 = position[1];
+            t3 = position[2];
+
+
+            rotationTranslationMatrix << 
+                r11, r12, r13, t1,
+                r21, r22, r23, t2,
+                r31, r32, r33, t3,
+                0,   0,   0,   1;
+        };
+
+        void quaternion2euler(float *quaternion, float *euler) {
+            euler[0] = atan2(2 * (quaternion[0] * quaternion[1] + 
+                quaternion[2] * quaternion[3]), 1 - 2 * (quaternion[1] * quaternion[1]
+                + quaternion[2] * quaternion[2]));
+
+            euler[1] = asin(2 * (quaternion[0] * quaternion[2] -
+                quaternion[3] * quaternion[1]));
+
+            euler[2] = atan2(2 * (quaternion[0]*quaternion[3] +
+                quaternion[1]*quaternion[2]), 1 - 2 * (quaternion[2]*quaternion[2] +
+                quaternion[3] * quaternion[3]));
+        };
+
+        void euler2quaternion(float *euler, float *quaternion) {
+            float cy = cos(euler[2] * 0.5);
+            float sy = sin(euler[2] * 0.5);
+            float cr = cos(euler[0] * 0.5);
+            float sr = sin(euler[0] * 0.5);
+            float cp = cos(euler[1] * 0.5);
+            float sp = sin(euler[1] * 0.5);
+
+            quaternion[0] = cy * cr * cp + sy * sr * sp; //w
+            quaternion[1] = cy * sr * cp - sy * cr * sp; //x
+            quaternion[2] = cy * cr * sp + sy * sr * cp; //y
+            quaternion[3] = sy * cr * cp - cy * sr * sp; //z
+        };
+
+        void fetchLocalEndEffectorPosition() {
             float position[3], q[4], orientationEuler[3];
 
             arm_pose_meas_ = wp_control.getEndEffectorPosition();
@@ -74,12 +160,13 @@ class AerialManipulatorControl {
         double xq_, yq_, zq_;
 
         geometry_msgs::PoseStamped uav_pose_meas_, arm_pose_meas_;
-        geometry_msgs::PoseStamped pose_ref_;
+        geometry_msgs::PoseStamped pose_ref_, pose_meas_;
         geometry_msgs::TwistStamped vel_ref_, acc_ref_;
         geometry_msgs::WrenchStamped force_meas_, force_torque_ref_;
 
         Eigen::Matrix4d Tuav_arm_, Tworld_uav_origin_, Tuav_origin_world_;
         Eigen::Matrix4d Tend_effector_arm_, Tarm_end_effector_;
+        Eigen::Matrix4d Tworld_end_effector_;
 
         std::vector<double> kp1_, kp2_, wp_, wd_, M_, B_, K_, dead_zone_, kp0_;
 
@@ -169,17 +256,17 @@ class AerialManipulatorControl {
 
             if (req.data && isReady() && !start_flag_)
             {
-                //initial_values[0] = pose_meas_.pose.position.x;
-                //initial_values[1] = pose_meas_.pose.position.y;
-                //initial_values[2] = pose_meas_.pose.position.z;
+                initial_values[0] = pose_meas_.pose.position.x;
+                initial_values[1] = pose_meas_.pose.position.y;
+                initial_values[2] = pose_meas_.pose.position.z;
 
                 pose_ref_.pose.position.x = initial_values[0];
                 pose_ref_.pose.position.y = initial_values[1];
                 pose_ref_.pose.position.z = initial_values[2];
-                pose_ref_.pose.orientation.x = 0;//pose_meas_.pose.orientation.x;
-                pose_ref_.pose.orientation.y = 0;//pose_meas_.pose.orientation.y;
-                pose_ref_.pose.orientation.z = 0;//pose_meas_.pose.orientation.z;
-                pose_ref_.pose.orientation.w = 0;//pose_meas_.pose.orientation.w;
+                pose_ref_.pose.orientation.x = pose_meas_.pose.orientation.x;
+                pose_ref_.pose.orientation.y = pose_meas_.pose.orientation.y;
+                pose_ref_.pose.orientation.z = pose_meas_.pose.orientation.z;
+                pose_ref_.pose.orientation.w = pose_meas_.pose.orientation.w;
 
                 vel_ref_.twist.linear.x = 0;
                 vel_ref_.twist.linear.y = 0;
@@ -273,62 +360,28 @@ class AerialManipulatorControl {
             return start_flag_;
         };
 
-        void getRotationTranslationMatrix(Eigen::Matrix4d &rotationTranslationMatrix, float *orientationEuler, float *position) {
-            float r11, r12, r13, t1, r21, r22, r23, t2;
-            float r31, r32, r33, t3;
+        void calculateEndEffectorPosition() {
+            float orientationEuler[3], orientationQuaternion[3];
 
-            float x, y, z;
+            this->fetchLocalEndEffectorPosition();
+            Tworld_end_effector_ = Tworld_uav_origin_;// * Tuav_arm_ * Tarm_end_effector_;
 
-            x = orientationEuler[0];
-            y = orientationEuler[1];
-            z = orientationEuler[2];
+            getAnglesFromRotationTranslationMatrix(Tworld_end_effector_, orientationEuler);
+            euler2quaternion(orientationEuler, orientationQuaternion);
 
-            r11 = cos(y)*cos(z);
-
-            r12 = cos(z)*sin(x)*sin(y) - cos(x)*sin(z);
-
-            r13 = sin(x)*sin(z) + cos(x)*cos(z)*sin(y);
-
-            r21 = cos(y)*sin(z);
-
-            r22 = cos(x)*cos(z) + sin(x)*sin(y)*sin(z);
-
-            r23 = cos(x)*sin(y)*sin(z) - cos(z)*sin(x);
-
-            r31 = -sin(y);
-
-            r32 = cos(y)*sin(x);
-
-            r33 = cos(x)*cos(y);
-
-            t1 = position[0];
-            t2 = position[1];
-            t3 = position[2];
-
-
-            rotationTranslationMatrix << 
-                r11, r12, r13, t1,
-                r21, r22, r23, t2,
-                r31, r32, r33, t3,
-                0,   0,   0,   1;
-        };
-
-        void quaternion2euler(float *quaternion, float *euler) {
-            euler[0] = atan2(2 * (quaternion[0] * quaternion[1] + 
-                quaternion[2] * quaternion[3]), 1 - 2 * (quaternion[1] * quaternion[1]
-                + quaternion[2] * quaternion[2]));
-
-            euler[1] = asin(2 * (quaternion[0] * quaternion[2] -
-                quaternion[3] * quaternion[1]));
-
-            euler[2] = atan2(2 * (quaternion[0]*quaternion[3] +
-                quaternion[1]*quaternion[2]), 1 - 2 * (quaternion[2]*quaternion[2] +
-                quaternion[3] * quaternion[3]));
+            pose_meas_.header.stamp = ros::Time::now();
+            pose_meas_.header.frame_id = "aerial_manipulator";
+            pose_meas_.pose.position.x = Tworld_end_effector_(0,3);
+            pose_meas_.pose.position.y = Tworld_end_effector_(1,3);
+            pose_meas_.pose.position.z = Tworld_end_effector_(2,3);
+            pose_meas_.pose.orientation.x = orientationQuaternion[1];
+            pose_meas_.pose.orientation.y = orientationQuaternion[2];
+            pose_meas_.pose.orientation.z = orientationQuaternion[3];
+            pose_meas_.pose.orientation.w = orientationQuaternion[0];
         };
 
         void getEndEffectorTransformationMatrix(Eigen::Matrix4d &transformationMatrix) {
-            this->fetchEndEffectorPosition();
-            transformationMatrix = Tworld_uav_origin_ * Tuav_arm_ * Tarm_end_effector_;
+            transformationMatrix = Tworld_end_effector_;
         };
 
         bool isReady(void) {
@@ -406,6 +459,21 @@ class AerialManipulatorControl {
             zc_ = impedance_control_z_.impedanceFilter(force_meas_.wrench.force.z, force_torque_ref_.wrench.force.z, zr_);
         };
 
+        geometry_msgs::PoseStamped getAerialManipulatorComandPose() {
+            geometry_msgs::PoseStamped msg;
+
+            msg.header.stamp = this->getTime();
+            msg.pose.position.x = xc_[0];
+            msg.pose.position.y = yc_[0];
+            msg.pose.position.z = zc_[0];
+            msg.pose.orientation.x = qxc_[0];
+            msg.pose.orientation.y = qyc_[0];
+            msg.pose.orientation.z = qzc_[0];
+            msg.pose.orientation.w = qwc_[0];
+
+            return msg;
+        };
+
         double *getXc() {
             return xc_;
         };
@@ -480,6 +548,8 @@ int main(int argc, char **argv)
     Eigen::Matrix4d Tworld_end_effector;
     std_msgs::Float64MultiArray transformation_msg;
 
+    geometry_msgs::PoseStamped commanded_position_msg;
+
     transformation_msg.data.resize(16);
 
     std::string path = ros::package::getPath("aerial_manipulators_control");
@@ -509,11 +579,14 @@ int main(int argc, char **argv)
     ros::Subscriber force_ros_sub = n.subscribe("aerial_manipulator_control/force_torque_meas_input", 1, &AerialManipulatorControl::forceMeasurementCb, &aerial_manipulator_control);
     
     ros::Publisher transformation_pub_ = n.advertise<std_msgs::Float64MultiArray>("aerial_manipulator_control/transformation/world_end_effector", 1);
+    ros::Publisher state_pub_ = n.advertise<std_msgs::Float64MultiArray>("aerial_manipulator_control/state", 1);
+    ros::Publisher pose_stamped_commanded_pub_ = n.advertise<geometry_msgs::PoseStamped>("aerial_manipulator_control/pose_stamped_output", 1);
+    ros::Publisher pose_commanded_pub_ = n.advertise<geometry_msgs::Pose>("aerial_manipulator_control/pose_output", 1);
 
     ros::ServiceServer start_control_ros_srv = n.advertiseService("aerial_manipulator_control/start", &AerialManipulatorControl::startControlCb, &aerial_manipulator_control);
 
     while (ros::Time::now().toSec() == 0 && ros::ok()) {
-        ROS_INFO("Waiting for clock server to start 3");
+        ROS_INFO("[AerialManipulatorControl] Waiting for clock server to start");
         ros::Duration(0.5).sleep();
     }
     ROS_INFO("Received first clock message");
@@ -521,10 +594,10 @@ int main(int argc, char **argv)
     while (!aerial_manipulator_control.isReady() && ros::ok()) {
         ros::spinOnce();
 
-        ROS_INFO("Waiting for the first measurement.");
+        ROS_INFO("[AerialManipulatorControl] Waiting for the first measurement.");
         ros::Duration(0.5).sleep();
     }
-    ROS_INFO("Waiting aerial manipulator control to start...");
+    ROS_INFO("[AerialManipulatorControl] Waiting aerial manipulator control to start...");
 
     time_old = aerial_manipulator_control.getTime().toSec();
 
@@ -537,6 +610,7 @@ int main(int argc, char **argv)
         time_old = time;
 
         if (dt > 0.0) {
+            aerial_manipulator_control.calculateEndEffectorPosition();
             aerial_manipulator_control.getEndEffectorTransformationMatrix(Tworld_end_effector); 
 
             for (int i = 0; i < 4; i++) {
@@ -548,6 +622,10 @@ int main(int argc, char **argv)
             if (aerial_manipulator_control.isStarted()) {
 
                 aerial_manipulator_control.impedanceFilter();
+
+                commanded_position_msg = aerial_manipulator_control.getAerialManipulatorComandPose();
+                pose_stamped_commanded_pub_.publish(commanded_position_msg);
+                pose_commanded_pub_.publish(commanded_position_msg.pose);
             }
         }
 
