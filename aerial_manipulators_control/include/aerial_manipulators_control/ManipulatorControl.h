@@ -35,6 +35,7 @@ public:
 	int init();
 	int getControlMode(void);
 	bool isStarted(void);
+	Eigen::MatrixXd getJacobian(void);
 private:
 	void qCbRos(const boost::shared_ptr<std_msgs::Float32 const> &msg, int index);
 	void controlModeCbRos(const std_msgs::Int32 &msg);

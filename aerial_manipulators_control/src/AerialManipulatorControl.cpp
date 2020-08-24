@@ -430,6 +430,10 @@ class AerialManipulatorControl {
             transformationMatrix = Tworld_end_effector_;
         };
 
+        geometry_msgs::PoseStamped getEndEffectorPositionLocal() {
+            return arm_pose_meas_;
+        }
+
         void clockCb(const rosgraph_msgs::Clock &msg) {
             clock_ = msg;
         };
@@ -491,6 +495,9 @@ class AerialManipulatorControl {
             zKp_ = aic_control_z_.getAdaptiveEnvironmentStiffnessGainKp();
             zq_ = aic_control_z_.getQ();
             zc_ = impedance_control_z_.impedanceFilter(force_meas_.wrench.force.z, force_torque_ref_.wrench.force.z, zr_);
+
+            std::cout<<manipulator_control_.getJacobian().completeOrthogonalDecomposition().pseudoInverse()<<std::endl;
+            std::cout<<std::endl;
         };
 
         geometry_msgs::PoseStamped getAerialManipulatorComandPose() {
@@ -587,6 +594,7 @@ int main(int argc, char **argv)
     std_msgs::Float64MultiArray transformation_msg;
 
     geometry_msgs::PoseStamped commanded_position_msg;
+    geometry_msgs::PoseStamped end_effector_pose;
 
     transformation_msg.data.resize(16);
 
@@ -621,6 +629,7 @@ int main(int argc, char **argv)
     ros::Publisher state_pub_ = n.advertise<std_msgs::Float64MultiArray>("aerial_manipulator_control/state", 1);
     ros::Publisher pose_stamped_commanded_pub_ = n.advertise<geometry_msgs::PoseStamped>("aerial_manipulator_control/pose_stamped_output", 1);
     ros::Publisher pose_commanded_pub_ = n.advertise<geometry_msgs::Pose>("aerial_manipulator_control/pose_output", 1);
+    ros::Publisher manipulator_position_local_pub_ros_ = n.advertise<geometry_msgs::PoseStamped>("aerial_manipulator_control/end_effector/pose_local", 1);
 
     ros::ServiceServer start_control_ros_srv = n.advertiseService("aerial_manipulator_control/start", &AerialManipulatorControl::startControlCb, &aerial_manipulator_control);
 
@@ -650,7 +659,8 @@ int main(int argc, char **argv)
 
         if (dt > 0.0) {
             aerial_manipulator_control.calculateEndEffectorPosition();
-            aerial_manipulator_control.getEndEffectorTransformationMatrix(Tworld_end_effector); 
+            aerial_manipulator_control.getEndEffectorTransformationMatrix(Tworld_end_effector);
+            end_effector_pose = aerial_manipulator_control.getEndEffectorPositionLocal();
 
             for (int i = 0; i < 4; i++) {
                 for (int j = 0; j < 4; j++) {
@@ -666,6 +676,8 @@ int main(int argc, char **argv)
                 pose_stamped_commanded_pub_.publish(commanded_position_msg);
                 pose_commanded_pub_.publish(commanded_position_msg.pose);
             }
+
+            manipulator_position_local_pub_ros_.publish(end_effector_pose);
         }
 
         transformation_pub_.publish(transformation_msg);
