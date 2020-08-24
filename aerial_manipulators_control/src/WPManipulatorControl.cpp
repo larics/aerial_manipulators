@@ -1,4 +1,5 @@
 #include <aerial_manipulators_control/WPManipulatorControl.h>
+#include <eigen_conversions/eigen_msg.h>
 #include <ros/package.h>
 
 int main(int argc, char **argv)
@@ -12,6 +13,11 @@ int main(int argc, char **argv)
 	bool simulation_flag;
 	std::string robot_model_name, joint_group_name;
 	std::string parameters_file;
+	geometry_msgs::PoseStamped end_effector_pose;
+	Eigen::Affine3d end_effector_transform;
+	std_msgs::Float64MultiArray transformation_msg;
+
+	transformation_msg.data.resize(16);
 
 	std::string path = ros::package::getPath("aerial_manipulators_control");
 
@@ -21,6 +27,7 @@ int main(int argc, char **argv)
 	private_node_handle_.param("parameters_file", parameters_file, std::string("/config/wp_manipulator_dh_parameters.yaml"));
 
 	ros::Publisher manipulator_position_pub_ros_ = n.advertise<geometry_msgs::PoseStamped>("end_effector/pose", 1);
+	ros::Publisher transformation_pub_ = n.advertise<std_msgs::Float64MultiArray>("transformation/world_end_effector", 1);
 
 	ManipulatorControl wp_control;
 
@@ -50,7 +57,18 @@ int main(int argc, char **argv)
 			wp_control.publishJointSetpoints(wp_control.getJointSetpoints());
 		}
 
-		manipulator_position_pub_ros_.publish(wp_control.getEndEffectorPosition());
+
+		end_effector_pose = wp_control.getEndEffectorPosition();
+		tf::poseMsgToEigen(end_effector_pose.pose, end_effector_transform);
+
+		manipulator_position_pub_ros_.publish(end_effector_pose);
+
+		for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                transformation_msg.data[j + i*4] = end_effector_transform(i, j);
+            }
+        }
+        transformation_pub_.publish(transformation_msg);
 
 		loop_rate.sleep();
 	}

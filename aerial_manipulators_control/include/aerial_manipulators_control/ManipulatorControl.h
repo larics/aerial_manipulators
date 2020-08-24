@@ -27,8 +27,10 @@ public:
 	std::vector<Eigen::Affine3d> getLinkPositions(Eigen::VectorXd q);
 	geometry_msgs::Pose getEndEffectorReferencePosition(void);
 	void LoadParameters(std::string file);
+	void set_q_directions(std::vector<int> directions);
 	void publishJointSetpoints(std::vector<double> q);
 	std::vector<double> getJointSetpoints(void);
+	int getNumberOfJoints(void);
 	int init(ros::NodeHandle *n);
 	int init();
 	int getControlMode(void);

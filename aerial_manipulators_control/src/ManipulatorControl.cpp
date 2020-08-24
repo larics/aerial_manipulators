@@ -74,7 +74,6 @@ void ManipulatorControl::jointControllerStateCbRos(const sensor_msgs::JointState
 
 	const std::vector<std::string> &joint_names = joint_model_group_->getActiveJointModelNames();
 	if (number_of_joints_ <= msg.name.size()) {
-		start_flag_ = true;
 		for (int i = 0; i < number_of_joints_; i++) {
 			for (int j = 0; j < number_of_joints_; j++) {
 				if (joint_names[i].compare(msg.name[j]) == 0) {
@@ -83,8 +82,22 @@ void ManipulatorControl::jointControllerStateCbRos(const sensor_msgs::JointState
 				}
 			}
 		}
+
+		if (!start_flag_)
+		{
+			for (int i = 0; i < number_of_joints_; i++) {
+				q_setpoint_[i] = q_pos_meas_[i];
+			}
+		}
+
+		start_flag_ = true;
 	}
 }
+
+int ManipulatorControl::getNumberOfJoints(void)
+{
+	return number_of_joints_;
+};
 
 bool ManipulatorControl::isStarted(void)
 {
@@ -222,38 +235,22 @@ geometry_msgs::PoseStamped ManipulatorControl::getEndEffectorPosition(void)
 
 Eigen::Affine3d ManipulatorControl::getEndEffectorTransform(std::vector<double> q)
 {
-	geometry_msgs::PoseStamped end_effector_pose;
-
 	int number_of_links = (*kinematic_model_)->getLinkModels().size();
 	std::string end_effector_name = (*kinematic_model_)->getLinkModels()[number_of_links-1]->getName();
 
 	(*kinematic_state_)->setJointGroupPositions(joint_model_group_, q);
 	const Eigen::Affine3d &end_effector_state = (*kinematic_state_)->getGlobalLinkTransform(end_effector_name);
-
-	end_effector_pose.header.stamp = ros::Time::now();
-	end_effector_pose.header.frame_id = (*kinematic_model_)->getModelFrame().c_str();
-	end_effector_pose.header.frame_id = (*kinematic_model_)->getModelFrame();
-
-	tf::poseEigenToMsg(end_effector_state, end_effector_pose.pose);
 
 	return end_effector_state;
 }
 
 Eigen::Affine3d ManipulatorControl::getEndEffectorTransform(Eigen::VectorXd q)
 {
-	geometry_msgs::PoseStamped end_effector_pose;
-
 	int number_of_links = (*kinematic_model_)->getLinkModels().size();
 	std::string end_effector_name = (*kinematic_model_)->getLinkModels()[number_of_links-1]->getName();
 
 	(*kinematic_state_)->setJointGroupPositions(joint_model_group_, q);
 	const Eigen::Affine3d &end_effector_state = (*kinematic_state_)->getGlobalLinkTransform(end_effector_name);
-
-	end_effector_pose.header.stamp = ros::Time::now();
-	end_effector_pose.header.frame_id = (*kinematic_model_)->getModelFrame().c_str();
-	end_effector_pose.header.frame_id = (*kinematic_model_)->getModelFrame();
-
-	tf::poseEigenToMsg(end_effector_state, end_effector_pose.pose);
 
 	return end_effector_state;
 }
@@ -311,6 +308,11 @@ void ManipulatorControl::publishJointSetpoints(std::vector<double> q) {
 	joint_setpoints.points.push_back(joint_setpoint);
 
 	dynamixel_sepoint_ros_pub_.publish(joint_setpoints);
+}
+
+void ManipulatorControl::set_q_directions(std::vector<int> directions) 
+{
+	q_directions_= directions;
 }
 
 void ManipulatorControl::LoadParameters(std::string file)

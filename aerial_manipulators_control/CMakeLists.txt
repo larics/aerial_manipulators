@@ -58,4 +58,4 @@ add_executable(wp_manipulator_control src/WPManipulatorControl.cpp)
 target_link_libraries(wp_manipulator_control ${catkin_LIBRARIES} ManipulatorControl)
 
 add_executable(aerial_manipulator_control src/AerialManipulatorControl.cpp)
-target_link_libraries(aerial_manipulator_control ${catkin_LIBRARIES} yaml-cpp)
+target_link_libraries(aerial_manipulator_control ${catkin_LIBRARIES} yaml-cpp ManipulatorControl)
