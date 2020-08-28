@@ -25,6 +25,7 @@ ManipulatorControl::~ManipulatorControl(void)
 		delete kinematic_model_;
 		delete robot_model_loader_;
 		delete[] manipulator_q_set_point_sub_ros_;
+		delete[] manipulator_q_set_point_pub_ros_;
 		delete[] q_torque_meas_;
 	}
 }
@@ -50,6 +51,11 @@ void ManipulatorControl::controlModeCbRos(const std_msgs::Int32 &msg)
 int ManipulatorControl::getControlMode(void)
 {
 	return control_mode_;
+}
+
+void ManipulatorControl::setControlMode(int control_mode)
+{
+	control_mode_ = control_mode;
 }
 
 void ManipulatorControl::jointControllerStateCbRos(const sensor_msgs::JointState &msg)
@@ -140,6 +146,10 @@ int ManipulatorControl::init(ros::NodeHandle *n)
 			end_effector_pose_sub_ros_ = n_->subscribe("end_effector/pose_ref", 1, &ManipulatorControl::endEffectorPoseRefCbRos, this);
 
 			dynamixel_sepoint_ros_pub_ = n_->advertise<trajectory_msgs::JointTrajectory>("joint_trajectory", 1);
+			manipulator_q_set_point_pub_ros_ = new ros::Publisher[number_of_joints_];
+			for (int i = 0; i < joint_names.size(); i++) {
+				manipulator_q_set_point_pub_ros_[i] = n_->advertise<std_msgs::Float64>(joint_names[i] + "_position_controller/command", 1);
+			}
 
 			is_initialized_ = 1;
 		}
@@ -190,6 +200,9 @@ int ManipulatorControl::init()
 			end_effector_pose_sub_ros_ = n_->subscribe("end_effector/pose_ref", 1, &ManipulatorControl::endEffectorPoseRefCbRos, this);
 
 			dynamixel_sepoint_ros_pub_ = n_->advertise<trajectory_msgs::JointTrajectory>("joint_trajectory", 1);
+			for (int i = 0; i < joint_names.size(); i++) {
+				manipulator_q_set_point_pub_ros_[i] = n_->advertise<std_msgs::Float64>(joint_names[i] + "_position_controller/command", 1);
+			}
 
 			is_initialized_ = 1;
 		}
@@ -281,6 +294,11 @@ std::vector<double> ManipulatorControl::getJointSetpoints(void)
 	return q_setpoint_; 	
 }
 
+std::vector<double> ManipulatorControl::getJointMeasurements(void)
+{
+	return q_pos_meas_;
+}
+
 Eigen::MatrixXd ManipulatorControl::getJacobian(void)
 {
 	Eigen::MatrixXd jacobian;
@@ -317,6 +335,8 @@ void ManipulatorControl::publishJointSetpoints(std::vector<double> q) {
 		joint_setpoint.velocities.push_back(0.0);
 		joint_setpoint.accelerations.push_back(0.0);
 		joint_setpoint.effort.push_back(0.0);
+
+		manipulator_q_set_point_pub_ros_[i].publish(q_directions_[i] * q[i]);
 	}
 
 	joint_setpoint.time_from_start = ros::Duration(1);
@@ -358,11 +378,13 @@ std::vector<double> ManipulatorControl::calculateJointSetpoints(geometry_msgs::P
 }
 
 
-std::vector<double> ManipulatorControl::calculateJointSetpoints(geometry_msgs::Pose end_effector_pose, bool &found_ik_flag)
+std::vector<double> ManipulatorControl::calculateJointSetpoints(geometry_msgs::Pose end_effector_pose, bool &found_ik_flag, int attempts, double timeout)
 {
 	std::vector<double> q(number_of_joints_, 0);
 
-	bool found_ik = (*kinematic_state_)->setFromIK(joint_model_group_, end_effector_pose, 10, 1);
+	(*kinematic_state_)->setJointGroupPositions(joint_model_group_, q_pos_meas_);
+
+	bool found_ik = (*kinematic_state_)->setFromIK(joint_model_group_, end_effector_pose, attempts, timeout);
 
 	if (found_ik)
 		(*kinematic_state_)->copyJointGroupPositions(joint_model_group_, q);

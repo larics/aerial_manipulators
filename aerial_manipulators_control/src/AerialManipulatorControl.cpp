@@ -138,22 +138,84 @@ class AerialManipulatorControl {
         void fetchLocalEndEffectorPosition() {
             float position[3], q[4], orientationEuler[3];
 
-            arm_pose_meas_ = manipulator_control_.getEndEffectorPosition();
+            manipulator_pose_meas_ = manipulator_control_.getEndEffectorPosition();
 
-            position[0] = arm_pose_meas_.pose.position.x;
-            position[1] = arm_pose_meas_.pose.position.y;
-            position[2] = arm_pose_meas_.pose.position.z;
+            position[0] = manipulator_pose_meas_.pose.position.x;
+            position[1] = manipulator_pose_meas_.pose.position.y;
+            position[2] = manipulator_pose_meas_.pose.position.z;
 
-            q[0] = arm_pose_meas_.pose.orientation.w;
-            q[1] = arm_pose_meas_.pose.orientation.x;
-            q[2] = arm_pose_meas_.pose.orientation.y;
-            q[3] = arm_pose_meas_.pose.orientation.z;
+            q[0] = manipulator_pose_meas_.pose.orientation.w;
+            q[1] = manipulator_pose_meas_.pose.orientation.x;
+            q[2] = manipulator_pose_meas_.pose.orientation.y;
+            q[3] = manipulator_pose_meas_.pose.orientation.z;
 
             quaternion2euler(q, orientationEuler);
 
             getRotationTranslationMatrix(Tarm_end_effector_, orientationEuler, position);
             Tend_effector_arm_ = Tarm_end_effector_.inverse();
         };
+
+        void aerial_manipulator_inverse_kinematics() {
+            Eigen::Vector4d dP, dPuav, dPmanipulator, aa;
+            Eigen::Matrix4d Tworld_end_effector_command;
+            bool ik_found = false;
+
+
+
+            alpha_ = 1.0;
+
+            dP(0) = aerial_manipulator_command_pose_[0].pose.position.x - aerial_manipulator_command_pose_[1].pose.position.x;
+            dP(1) = aerial_manipulator_command_pose_[0].pose.position.y - aerial_manipulator_command_pose_[1].pose.position.y;
+            dP(2) = aerial_manipulator_command_pose_[0].pose.position.z - aerial_manipulator_command_pose_[1].pose.position.z;
+            dP(3) = 0.0;
+
+            dPuav = alpha_ * dP;
+            dPmanipulator = (1 - alpha_) * dP;
+
+            //pozicija za koju se mora pomaktnuti letjelica je alpha puta dx,
+            //pozicija za koju se mora pomaknuti rukica je (1-alpha) puta dx,
+
+
+            aa = Tarm_uav_ * Tuav_origin_world_ * dP;
+
+
+ //Tworld_end_effector_ = Tworld_uav_origin_;// * Tuav_arm_ * Tarm_end_effector_;
+            //std::cout<<dP<<std::endl;
+            //std::cout<<dPuav<<std::endl;
+            //std::cout<<dPmanipulator<<std::endl;
+            //std::cout<<std::endl;
+
+            uav_command_pose_.header.stamp = this->getTime();
+            uav_command_pose_.header.frame_id = "uav";
+            uav_command_pose_.pose.position.x += dPuav(0);
+            uav_command_pose_.pose.position.y += dPuav(1);
+            uav_command_pose_.pose.position.z += dPuav(2);
+            uav_command_pose_.pose.orientation.x = aerial_manipulator_command_pose_[0].pose.orientation.x;
+            uav_command_pose_.pose.orientation.y = aerial_manipulator_command_pose_[0].pose.orientation.y;
+            uav_command_pose_.pose.orientation.z = aerial_manipulator_command_pose_[0].pose.orientation.z;
+            uav_command_pose_.pose.orientation.w = aerial_manipulator_command_pose_[0].pose.orientation.w;
+
+            manipulator_command_pose_.header.stamp = this->getTime();
+            manipulator_command_pose_.header.frame_id = "manipulator";
+            manipulator_command_pose_.pose.position.x = 0.44;
+            manipulator_command_pose_.pose.position.y = 0.0;
+            manipulator_command_pose_.pose.position.z = 0.0;
+            manipulator_command_pose_.pose.orientation.x = 0.0;
+            manipulator_command_pose_.pose.orientation.y = -0.707;
+            manipulator_command_pose_.pose.orientation.z = 0.7070;
+            manipulator_command_pose_.pose.orientation.w = 0.0;
+            q_manipulator_setpoint_ = manipulator_control_.calculateJointSetpoints(manipulator_command_pose_.pose, ik_found, 10, 1.0);
+            //uav_command_pose_.pose.orientation.x = aerial_manipulator_command_pose_[0].pose.orientation.x;
+            //uav_command_pose_.pose.orientation.y = aerial_manipulator_command_pose_[0].pose.orientation.y;
+            //uav_command_pose_.pose.orientation.z = aerial_manipulator_command_pose_[0].pose.orientation.z;
+            //uav_command_pose_.pose.orientation.w = aerial_manipulator_command_pose_[0].pose.orientation.w;
+
+            //std::cout<<manipulator_command_pose_<<std::endl;
+            //std::cout<<std::endl;
+            //calculateJointSetpoints(geometry_msgs::Pose end_effector_pose, bool &found_ik_flag)
+
+
+        }
 
         void LoadParameters(std::string file) {
             YAML::Node config = YAML::LoadFile(file);
@@ -168,6 +230,8 @@ class AerialManipulatorControl {
                     -sin(manipulator_origin[4]),                             cos(manipulator_origin[4])*sin(manipulator_origin[3]),                                                                                    cos(manipulator_origin[4])*cos(manipulator_origin[3]),                                                                                  manipulator_origin[2],
                     0,                                                      0,                                                                                                                                        0,                                                                                                                                      1;
 
+            
+            Tarm_uav_ = Tuav_arm_.inverse();
             manipulator_control_.set_q_directions(manipulator_q_directions);
             uav_degrees_of_freedom_ = config["UAV"]["degrees_of_freedom"].as<int>();
 
@@ -213,18 +277,19 @@ class AerialManipulatorControl {
         bool start_flag_, force_msg_received_;
         double *xr_, *xc_, *yr_, *yc_, *zr_, *zc_, *xKp_, *yKp_, *zKp_;
         double qxc_[3], qyc_[3], qzc_[3], qwc_[3];
-        double xq_, yq_, zq_;
+        double xq_, yq_, zq_, alpha_;
 
-        geometry_msgs::PoseStamped uav_pose_meas_, arm_pose_meas_;
-        geometry_msgs::PoseStamped pose_ref_, pose_meas_;
+        geometry_msgs::PoseStamped uav_pose_meas_, manipulator_pose_meas_, uav_command_pose_, manipulator_command_pose_;
+        geometry_msgs::PoseStamped pose_ref_, pose_meas_, aerial_manipulator_command_pose_[2];
         geometry_msgs::TwistStamped vel_ref_, acc_ref_;
         geometry_msgs::WrenchStamped force_meas_, force_torque_ref_;
 
-        Eigen::Matrix4d Tuav_arm_, Tworld_uav_origin_, Tuav_origin_world_;
+        Eigen::Matrix4d Tuav_arm_, Tworld_uav_origin_, Tuav_origin_world_, Tarm_uav_;
         Eigen::Matrix4d Tend_effector_arm_, Tarm_end_effector_;
-        Eigen::Matrix4d Tworld_end_effector_;
+        Eigen::Matrix4d Tworld_end_effector_, Tend_effector_world_;
 
         std::vector<double> kp1_, kp2_, wp_, wd_, M_, B_, K_, dead_zone_, kp0_;
+        std::vector<double> q_manipulator_setpoint_;
 
         rosgraph_msgs::Clock clock_;
 
@@ -252,12 +317,15 @@ class AerialManipulatorControl {
             qwc_(),
             xq_(0.0),
             yq_(0.0),
-            zq_(0.0) {
+            zq_(0.0),
+            alpha_(0.0) {
 
             Tuav_arm_ <<  1,  0,  0,  0,
                           0,  1,  0,  0,
                           0,  0,  1,  0,
                           0,  0,  0,  1;
+
+            Tarm_uav_ = Tuav_arm_.inverse();
 
             Tworld_uav_origin_ << 1, 0, 0, 0,
                                   0, 1, 0, 0, 
@@ -277,7 +345,9 @@ class AerialManipulatorControl {
             manipulator_control_.setManipulatorName(robot_model_name, joint_model_group_name);
             manipulator_control_.init(n);
 
-            number_of_joints_ = manipulator_control_.getNumberOfJoints() + uav_degrees_of_freedom_;
+            number_of_joints_ = manipulator_control_.getNumberOfJoints();
+
+            q_manipulator_setpoint_ = std::vector<double>(number_of_joints_, 0);
         };
 
         void trajectoryRefCb(const trajectory_msgs::MultiDOFJointTrajectory &msg) {
@@ -363,6 +433,14 @@ class AerialManipulatorControl {
                 pose_ref_.pose.orientation.z = pose_meas_.pose.orientation.z;
                 pose_ref_.pose.orientation.w = pose_meas_.pose.orientation.w;
 
+                aerial_manipulator_command_pose_[0] = pose_ref_;
+                aerial_manipulator_command_pose_[1] = pose_ref_;
+                uav_command_pose_ = uav_pose_meas_;
+                manipulator_command_pose_ = manipulator_pose_meas_;
+                q_manipulator_setpoint_ = manipulator_control_.getJointMeasurements();
+
+                manipulator_command_pose_.pose.position.x += 0.06;
+
                 vel_ref_.twist.linear.x = 0;
                 vel_ref_.twist.linear.y = 0;
                 vel_ref_.twist.linear.z = 0;
@@ -410,12 +488,13 @@ class AerialManipulatorControl {
             float orientationEuler[3], orientationQuaternion[3];
 
             this->fetchLocalEndEffectorPosition();
-            Tworld_end_effector_ = Tworld_uav_origin_;// * Tuav_arm_ * Tarm_end_effector_;
+            Tworld_end_effector_ = Tworld_uav_origin_ * Tuav_arm_ * Tarm_end_effector_;
+            Tend_effector_world_ = Tworld_end_effector_.inverse();
 
             getAnglesFromRotationTranslationMatrix(Tworld_end_effector_, orientationEuler);
             euler2quaternion(orientationEuler, orientationQuaternion);
 
-            pose_meas_.header.stamp = ros::Time::now();
+            pose_meas_.header.stamp = this->getTime();
             pose_meas_.header.frame_id = "aerial_manipulator";
             pose_meas_.pose.position.x = Tworld_end_effector_(0,3);
             pose_meas_.pose.position.y = Tworld_end_effector_(1,3);
@@ -431,7 +510,7 @@ class AerialManipulatorControl {
         };
 
         geometry_msgs::PoseStamped getEndEffectorPositionLocal() {
-            return arm_pose_meas_;
+            return manipulator_pose_meas_;
         }
 
         void clockCb(const rosgraph_msgs::Clock &msg) {
@@ -451,6 +530,8 @@ class AerialManipulatorControl {
 
         void impedanceFilter() {
             double xd[3], yd[3], zd[3];
+
+            aerial_manipulator_command_pose_[1] = aerial_manipulator_command_pose_[0];
 
             xd[0] = pose_ref_.pose.position.x;
             xd[1] = vel_ref_.twist.linear.x;
@@ -496,24 +577,42 @@ class AerialManipulatorControl {
             zq_ = aic_control_z_.getQ();
             zc_ = impedance_control_z_.impedanceFilter(force_meas_.wrench.force.z, force_torque_ref_.wrench.force.z, zr_);
 
-            std::cout<<manipulator_control_.getJacobian().completeOrthogonalDecomposition().pseudoInverse()<<std::endl;
-            std::cout<<std::endl;
+            aerial_manipulator_command_pose_[0].header.stamp = this->getTime();
+            aerial_manipulator_command_pose_[0].pose.position.x = xc_[0];
+            aerial_manipulator_command_pose_[0].pose.position.y = yc_[0];
+            aerial_manipulator_command_pose_[0].pose.position.z = zc_[0];
+            aerial_manipulator_command_pose_[0].pose.orientation.x = qxc_[0];
+            aerial_manipulator_command_pose_[0].pose.orientation.y = qyc_[0];
+            aerial_manipulator_command_pose_[0].pose.orientation.z = qzc_[0];
+            aerial_manipulator_command_pose_[0].pose.orientation.w = qwc_[0];
+
+            //std::cout<<manipulator_control_.getJacobian().completeOrthogonalDecomposition().pseudoInverse()<<std::endl;
+            //std::cout<<std::endl;
+
+            this->aerial_manipulator_inverse_kinematics();
         };
 
-        geometry_msgs::PoseStamped getAerialManipulatorComandPose() {
-            geometry_msgs::PoseStamped msg;
 
-            msg.header.stamp = this->getTime();
-            msg.pose.position.x = xc_[0];
-            msg.pose.position.y = yc_[0];
-            msg.pose.position.z = zc_[0];
-            msg.pose.orientation.x = qxc_[0];
-            msg.pose.orientation.y = qyc_[0];
-            msg.pose.orientation.z = qzc_[0];
-            msg.pose.orientation.w = qwc_[0];
 
-            return msg;
+        geometry_msgs::PoseStamped getAerialManipulatorCommandPose() {
+            return aerial_manipulator_command_pose_[0];
         };
+
+        geometry_msgs::PoseStamped getUAVCommandPose() {
+            return uav_command_pose_;
+        }
+
+        geometry_msgs::PoseStamped getManipulatorCommandPose() {
+            return manipulator_command_pose_;
+        }
+
+        std::vector<double> getManipulatorCommandQ() {
+            return q_manipulator_setpoint_;
+        }
+
+        void publishManipulatorSetpoints() {
+            manipulator_control_.publishJointSetpoints(q_manipulator_setpoint_);
+        }
 
         bool isReady(void) {
             return force_msg_received_ && uav_pose_meas_received_ && manipulator_control_.isStarted();
@@ -593,8 +692,9 @@ int main(int argc, char **argv)
     Eigen::Matrix4d Tworld_end_effector;
     std_msgs::Float64MultiArray transformation_msg;
 
-    geometry_msgs::PoseStamped commanded_position_msg;
-    geometry_msgs::PoseStamped end_effector_pose;
+    geometry_msgs::PoseStamped commanded_uav_position_msg;
+    geometry_msgs::PoseStamped commanded_aerial_manipulator_position_msg;
+    geometry_msgs::PoseStamped end_effector_pose, commanded_manipulator_position_msg;
 
     transformation_msg.data.resize(16);
 
@@ -627,8 +727,10 @@ int main(int argc, char **argv)
 
     ros::Publisher transformation_pub_ = n.advertise<std_msgs::Float64MultiArray>("aerial_manipulator_control/transformation/world_end_effector", 1);
     ros::Publisher state_pub_ = n.advertise<std_msgs::Float64MultiArray>("aerial_manipulator_control/state", 1);
-    ros::Publisher pose_stamped_commanded_pub_ = n.advertise<geometry_msgs::PoseStamped>("aerial_manipulator_control/pose_stamped_output", 1);
-    ros::Publisher pose_commanded_pub_ = n.advertise<geometry_msgs::Pose>("aerial_manipulator_control/pose_output", 1);
+    ros::Publisher uav_pose_stamped_commanded_pub_ = n.advertise<geometry_msgs::PoseStamped>("aerial_manipulator_control/uav/pose_stamped_output", 1);
+    ros::Publisher uav_pose_commanded_pub_ = n.advertise<geometry_msgs::Pose>("aerial_manipulator_control/uav/pose_output", 1);
+    ros::Publisher aerial_manipulator_pose_commanded_pub_ = n.advertise<geometry_msgs::PoseStamped>("aerial_manipulator_control/pose_stamped_output", 1);
+    ros::Publisher manipulator_pose_stamped_commanded_pub_ = n.advertise<geometry_msgs::PoseStamped>("aerial_manipulator_control/end_effector/pose_stamped_output", 1);
     ros::Publisher manipulator_position_local_pub_ros_ = n.advertise<geometry_msgs::PoseStamped>("aerial_manipulator_control/end_effector/pose_local", 1);
 
     ros::ServiceServer start_control_ros_srv = n.advertiseService("aerial_manipulator_control/start", &AerialManipulatorControl::startControlCb, &aerial_manipulator_control);
@@ -672,9 +774,17 @@ int main(int argc, char **argv)
 
                 aerial_manipulator_control.impedanceFilter();
 
-                commanded_position_msg = aerial_manipulator_control.getAerialManipulatorComandPose();
-                pose_stamped_commanded_pub_.publish(commanded_position_msg);
-                pose_commanded_pub_.publish(commanded_position_msg.pose);
+                commanded_uav_position_msg = aerial_manipulator_control.getUAVCommandPose();
+                uav_pose_stamped_commanded_pub_.publish(commanded_uav_position_msg);
+                uav_pose_commanded_pub_.publish(commanded_uav_position_msg.pose);
+
+                aerial_manipulator_control.publishManipulatorSetpoints();
+
+                commanded_manipulator_position_msg = aerial_manipulator_control.getManipulatorCommandPose();
+                manipulator_pose_stamped_commanded_pub_.publish(commanded_manipulator_position_msg);
+
+                commanded_aerial_manipulator_position_msg = aerial_manipulator_control.getAerialManipulatorCommandPose();
+                aerial_manipulator_pose_commanded_pub_.publish(commanded_aerial_manipulator_position_msg);
             }
 
             manipulator_position_local_pub_ros_.publish(end_effector_pose);

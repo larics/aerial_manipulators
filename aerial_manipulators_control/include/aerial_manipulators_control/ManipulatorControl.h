@@ -5,6 +5,7 @@
 #include "yaml-cpp/yaml.h"
 
 #include <std_msgs/Float32.h>
+#include <std_msgs/Float64.h>
 #include <std_msgs/Int32.h>
 #include <sensor_msgs/JointState.h>
 #include <geometry_msgs/PoseStamped.h>
@@ -19,7 +20,7 @@ public:
 	~ManipulatorControl(void);
 	void setManipulatorName(std::string robot_model_name, std::string joint_model_group_name);
 	std::vector<double> calculateJointSetpoints(geometry_msgs::Pose end_effector_pose);
-	std::vector<double> calculateJointSetpoints(geometry_msgs::Pose end_effector_pose, bool &found_ik_flag);
+	std::vector<double> calculateJointSetpoints(geometry_msgs::Pose end_effector_pose, bool &found_ik_flag, int attempts = 10, double timeout = 1.0);
 	Eigen::VectorXd calculateJointSetpoints(Eigen::Affine3d end_effector_transform, bool &found_ik_flag);
 	geometry_msgs::PoseStamped getEndEffectorPosition(void);
 	Eigen::Affine3d getEndEffectorTransform(std::vector<double> q);
@@ -30,10 +31,12 @@ public:
 	void set_q_directions(std::vector<int> directions);
 	void publishJointSetpoints(std::vector<double> q);
 	std::vector<double> getJointSetpoints(void);
+	std::vector<double> getJointMeasurements(void);
 	int getNumberOfJoints(void);
 	int init(ros::NodeHandle *n);
 	int init();
 	int getControlMode(void);
+	void setControlMode(int control_mode);
 	bool isStarted(void);
 	Eigen::MatrixXd getJacobian(void);
 private:
@@ -43,6 +46,7 @@ private:
 	void endEffectorPoseRefCbRos(const geometry_msgs::PoseStamped &msg);
 
 	ros::Publisher dynamixel_sepoint_ros_pub_;
+	ros::Publisher *manipulator_q_set_point_pub_ros_;
 	std::vector<ros::Publisher> joint_setpoint_ros_pub_;
 	ros::Subscriber *manipulator_q_set_point_sub_ros_;
 	ros::Subscriber joint_state_sub_ros_, control_mode_sub_ros_;
