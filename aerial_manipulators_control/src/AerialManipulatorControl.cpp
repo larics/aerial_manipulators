@@ -195,16 +195,16 @@ class AerialManipulatorControl {
             uav_command_pose_.pose.orientation.z = aerial_manipulator_command_pose_[0].pose.orientation.z;
             uav_command_pose_.pose.orientation.w = aerial_manipulator_command_pose_[0].pose.orientation.w;
 
-            manipulator_command_pose_.header.stamp = this->getTime();
-            manipulator_command_pose_.header.frame_id = "manipulator";
-            manipulator_command_pose_.pose.position.x = 0.44;
-            manipulator_command_pose_.pose.position.y = 0.0;
-            manipulator_command_pose_.pose.position.z = 0.0;
-            manipulator_command_pose_.pose.orientation.x = 0.0;
-            manipulator_command_pose_.pose.orientation.y = -0.707;
-            manipulator_command_pose_.pose.orientation.z = 0.7070;
-            manipulator_command_pose_.pose.orientation.w = 0.0;
-            q_manipulator_setpoint_ = manipulator_control_.calculateJointSetpoints(manipulator_command_pose_.pose, ik_found, 10, 1.0);
+            //manipulator_command_pose_.header.stamp = this->getTime();
+            //manipulator_command_pose_.header.frame_id = "manipulator";
+            //manipulator_command_pose_.pose.position.x = -0.4163;
+            //manipulator_command_pose_.pose.position.y = 0.0869;
+            //manipulator_command_pose_.pose.position.z = 0.0;
+            //manipulator_command_pose_.pose.orientation.x = 0.0;
+            //manipulator_command_pose_.pose.orientation.y = -0.707;
+            //manipulator_command_pose_.pose.orientation.z = 0.7070;
+            //manipulator_command_pose_.pose.orientation.w = 0.0;
+            q_manipulator_setpoint_ = manipulator_control_.calculateJointSetpoints(manipulator_command_pose_.pose, ik_found, 10, 0.01);
             //uav_command_pose_.pose.orientation.x = aerial_manipulator_command_pose_[0].pose.orientation.x;
             //uav_command_pose_.pose.orientation.y = aerial_manipulator_command_pose_[0].pose.orientation.y;
             //uav_command_pose_.pose.orientation.z = aerial_manipulator_command_pose_[0].pose.orientation.z;
@@ -404,6 +404,10 @@ class AerialManipulatorControl {
             force_torque_ref_ = msg;
         };
 
+        void end_effector_cb(const geometry_msgs::PoseStamped &msg) {
+            manipulator_command_pose_ = msg;
+        }
+
         void forceMeasurementCb(const geometry_msgs::WrenchStamped &msg) {
             force_msg_received_ = true;
             force_meas_ = msg;
@@ -438,8 +442,6 @@ class AerialManipulatorControl {
                 uav_command_pose_ = uav_pose_meas_;
                 manipulator_command_pose_ = manipulator_pose_meas_;
                 q_manipulator_setpoint_ = manipulator_control_.getJointMeasurements();
-
-                manipulator_command_pose_.pose.position.x += 0.06;
 
                 vel_ref_.twist.linear.x = 0;
                 vel_ref_.twist.linear.y = 0;
@@ -724,6 +726,8 @@ int main(int argc, char **argv)
     ros::Subscriber force_torque_ref_ros_sub = n.subscribe("aerial_manipulator_control/force_torque_ref_input", 1, &AerialManipulatorControl::forceTorqueRefCb, &aerial_manipulator_control);
     ros::Subscriber force_ros_sub = n.subscribe("aerial_manipulator_control/force_torque_meas_input", 1, &AerialManipulatorControl::forceMeasurementCb, &aerial_manipulator_control);
     ros::Subscriber aerial_manipulator_trajectory_ref_ros_sub = n.subscribe("aerial_manipulator_control/trajectory_ref_input", 1, &AerialManipulatorControl::trajectoryRefCb, &aerial_manipulator_control);
+    ros::Subscriber znj = n.subscribe("aerial_manipulator_control/end_effector/pose_ref", 1, &AerialManipulatorControl::end_effector_cb, &aerial_manipulator_control);
+
 
     ros::Publisher transformation_pub_ = n.advertise<std_msgs::Float64MultiArray>("aerial_manipulator_control/transformation/world_end_effector", 1);
     ros::Publisher state_pub_ = n.advertise<std_msgs::Float64MultiArray>("aerial_manipulator_control/state", 1);
