@@ -25,24 +25,27 @@
 
 #include <aerial_manipulators_control/ManipulatorControl.h>
 
-class ikCostFunctor {
-    public:
-        ikCostFunctor(bool ik_func(geometry_msgs::Pose, int, double))
-         {
+class iKCostFunctor {
+    public: 
+        iKCostFunctor()
+        {};
 
+        void set_ik_func(std::function<bool(geometry_msgs::Pose, int, double)> ik_func)
+        {
+            ik_func_ = ik_func;
         };
 
         bool ik(geometry_msgs::Pose end_effector_pose, int attempts, double timeout) {
-            return false;//ik_func_(end_effector_pose, attempts, timeout);
+            return ik_func_(end_effector_pose, attempts, timeout);
         }
 
         template <typename T>
-        bool operator()(const T* const x , const T* const y, T* e) const {
+        bool operator()(const T* const alpha, T* residual) const {
             //e[0] = k_ - x[0] * y[0] - x[1] * y[1];
             //return true;
         };
 
-        void* ik_func_;
+        std::function<bool(geometry_msgs::Pose, int, double)> ik_func_;
 };
 
 class AerialManipulatorControl {
@@ -232,10 +235,11 @@ class AerialManipulatorControl {
             //manipulator_command_pose_.pose.orientation.x = 0.0;
             //manipulator_command_pose_.pose.orientation.y = -0.707;
             //manipulator_command_pose_.pose.orientation.z = 0.7070;
-            //manipulator_command_pose_.pose.orientation.w = 0.0;
+            //manipulator_command_pose_.pose.orientation.w = 0.0; 
+
             q_manipulator_setpoint_ = manipulator_control_.calculateJointSetpoints(manipulator_command_pose_.pose, ik_found, 10, 0.01);
-            ikCostFunctor kost(manipulator_control_.isPositionFeasible);
-            std::cout<<kost.ik(manipulator_command_pose_.pose, ik_found, 10, 0.01)<<std::endl;
+
+            std::cout<<ik_cost_functor_.ik(manipulator_command_pose_.pose, 10, 0.01)<<std::endl;
             //uav_command_pose_.pose.orientation.x = aerial_manipulator_command_pose_[0].pose.orientation.x;
             //uav_command_pose_.pose.orientation.y = aerial_manipulator_command_pose_[0].pose.orientation.y;
             //uav_command_pose_.pose.orientation.z = aerial_manipulator_command_pose_[0].pose.orientation.z;
@@ -331,6 +335,9 @@ class AerialManipulatorControl {
         ImpedanceControl impedance_control_z_, impedance_control_y_, impedance_control_x_;
         aic aic_control_z_, aic_control_x_, aic_control_y_;
 
+        std::function<bool(geometry_msgs::Pose, int, double)> ik_function_;
+        iKCostFunctor ik_cost_functor_;
+
     public:
         AerialManipulatorControl(int rate, bool simulation):
             rate_(rate),
@@ -370,6 +377,13 @@ class AerialManipulatorControl {
                                   0, 1, 0, 0, 
                                   0, 0, 1, 0,
                                   0, 0, 0, 1;
+
+            ik_function_ = [this](const geometry_msgs::Pose pose, int attempts, double timeout)
+            { 
+                return manipulator_control_.isPositionFeasible(pose, attempts, timeout); 
+            };
+
+            ik_cost_functor_.set_ik_func(ik_function_);
 
         };
 
