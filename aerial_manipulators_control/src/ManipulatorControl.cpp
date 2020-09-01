@@ -377,6 +377,17 @@ std::vector<double> ManipulatorControl::calculateJointSetpoints(geometry_msgs::P
 	return q;
 }
 
+bool ManipulatorControl::isPositionFeasible(geometry_msgs::Pose end_effector_pose, int attempts, double timeout)
+{
+	std::vector<double> q(number_of_joints_, 0);
+
+	(*kinematic_state_)->setJointGroupPositions(joint_model_group_, q_pos_meas_);
+
+	bool found_ik = (*kinematic_state_)->setFromIK(joint_model_group_, end_effector_pose, attempts, timeout);
+
+	return found_ik;
+}
+
 
 std::vector<double> ManipulatorControl::calculateJointSetpoints(geometry_msgs::Pose end_effector_pose, bool &found_ik_flag, int attempts, double timeout)
 {

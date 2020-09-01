@@ -24,6 +24,7 @@ add_definitions(-std=c++11)
 find_package(cmake_modules REQUIRED)
 find_package(Boost REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(Ceres REQUIRED)
 
 generate_dynamic_reconfigure_options(
     config/JointCtlParams.cfg
@@ -36,12 +37,13 @@ catkin_package(
    LIBRARIES ManipulatorControl
 )
 
-include_directories(SYSTEM ${Boost_INCLUDE_DIR} ${EIGEN3_INCLUDE_DIRS})
-
 include_directories(
+  SYSTEM
   include
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
+  ${CERES_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
 )
 
 link_directories(${catkin_LIBRARY_DIRS})
@@ -59,4 +61,4 @@ add_executable(wp_manipulator_control src/WPManipulatorControl.cpp)
 target_link_libraries(wp_manipulator_control ${catkin_LIBRARIES} ManipulatorControl)
 
 add_executable(aerial_manipulator_control src/AerialManipulatorControl.cpp)
-target_link_libraries(aerial_manipulator_control ${catkin_LIBRARIES} yaml-cpp aic impedance_control ManipulatorControl)
+target_link_libraries(aerial_manipulator_control ${catkin_LIBRARIES} yaml-cpp aic impedance_control ManipulatorControl ${CERES_LIBRARIES})

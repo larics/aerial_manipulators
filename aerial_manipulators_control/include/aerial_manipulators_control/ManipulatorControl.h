@@ -32,6 +32,7 @@ public:
 	void publishJointSetpoints(std::vector<double> q);
 	std::vector<double> getJointSetpoints(void);
 	std::vector<double> getJointMeasurements(void);
+	bool isPositionFeasible(geometry_msgs::Pose end_effector_pose, int attempts, double timeout);
 	int getNumberOfJoints(void);
 	int init(ros::NodeHandle *n);
 	int init();

@@ -8,18 +8,42 @@
 
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Pose.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/WrenchStamped.h>
 #include <rosgraph_msgs/Clock.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
 #include <std_srvs/SetBool.h>
+#include <std_srvs/Empty.h>
 
 #include <math.h>
 #include "yaml-cpp/yaml.h"
 #include <eigen3/Eigen/Eigen>
 
+#include "ceres/ceres.h"
+
 #include <aerial_manipulators_control/ManipulatorControl.h>
+
+class ikCostFunctor {
+    public:
+        ikCostFunctor(bool ik_func(geometry_msgs::Pose, int, double))
+         {
+
+        };
+
+        bool ik(geometry_msgs::Pose end_effector_pose, int attempts, double timeout) {
+            return false;//ik_func_(end_effector_pose, attempts, timeout);
+        }
+
+        template <typename T>
+        bool operator()(const T* const x , const T* const y, T* e) const {
+            //e[0] = k_ - x[0] * y[0] - x[1] * y[1];
+            //return true;
+        };
+
+        void* ik_func_;
+};
 
 class AerialManipulatorControl {
     private:
@@ -160,9 +184,10 @@ class AerialManipulatorControl {
             Eigen::Matrix4d Tworld_end_effector_command;
             bool ik_found = false;
 
+            ceres::Problem ik_problem;
+            ceres::Solver::Options ik_problem_options;
+            ceres::Solver::Summary ik_problem_summary;
 
-
-            alpha_ = 1.0;
 
             dP(0) = aerial_manipulator_command_pose_[0].pose.position.x - aerial_manipulator_command_pose_[1].pose.position.x;
             dP(1) = aerial_manipulator_command_pose_[0].pose.position.y - aerial_manipulator_command_pose_[1].pose.position.y;
@@ -174,6 +199,10 @@ class AerialManipulatorControl {
 
             //pozicija za koju se mora pomaktnuti letjelica je alpha puta dx,
             //pozicija za koju se mora pomaknuti rukica je (1-alpha) puta dx,
+
+
+
+
 
 
             aa = Tarm_uav_ * Tuav_origin_world_ * dP;
@@ -205,6 +234,8 @@ class AerialManipulatorControl {
             //manipulator_command_pose_.pose.orientation.z = 0.7070;
             //manipulator_command_pose_.pose.orientation.w = 0.0;
             q_manipulator_setpoint_ = manipulator_control_.calculateJointSetpoints(manipulator_command_pose_.pose, ik_found, 10, 0.01);
+            ikCostFunctor kost(manipulator_control_.isPositionFeasible);
+            std::cout<<kost.ik(manipulator_command_pose_.pose, ik_found, 10, 0.01)<<std::endl;
             //uav_command_pose_.pose.orientation.x = aerial_manipulator_command_pose_[0].pose.orientation.x;
             //uav_command_pose_.pose.orientation.y = aerial_manipulator_command_pose_[0].pose.orientation.y;
             //uav_command_pose_.pose.orientation.z = aerial_manipulator_command_pose_[0].pose.orientation.z;
@@ -224,6 +255,7 @@ class AerialManipulatorControl {
 
             manipulator_origin = config["origin"]["manipulator"].as<std::vector<double> >();
             manipulator_q_directions = config["manipulator"]["directions"].as<std::vector<int> >();
+            manipulator_q_home_ = config["manipulator"]["home"].as<std::vector<double> >();
 
             Tuav_arm_ <<  cos(manipulator_origin[5])*cos(manipulator_origin[4]),  cos(manipulator_origin[5])*sin(manipulator_origin[4])*sin(manipulator_origin[3])-sin(manipulator_origin[5])*cos(manipulator_origin[3]),  cos(manipulator_origin[5])*sin(manipulator_origin[4])*cos(manipulator_origin[3])+sin(manipulator_origin[5])*sin(manipulator_origin[3]), manipulator_origin[0],
                     sin(manipulator_origin[5])*cos(manipulator_origin[4]),  sin(manipulator_origin[5])*sin(manipulator_origin[4])*sin(manipulator_origin[3])+cos(manipulator_origin[5])*cos(manipulator_origin[3]),  sin(manipulator_origin[5])*sin(manipulator_origin[4])*cos(manipulator_origin[3])-cos(manipulator_origin[5])*sin(manipulator_origin[3]), manipulator_origin[1],
@@ -281,6 +313,7 @@ class AerialManipulatorControl {
 
         geometry_msgs::PoseStamped uav_pose_meas_, manipulator_pose_meas_, uav_command_pose_, manipulator_command_pose_;
         geometry_msgs::PoseStamped pose_ref_, pose_meas_, aerial_manipulator_command_pose_[2];
+        geometry_msgs::Pose manipulator_home_pose_;
         geometry_msgs::TwistStamped vel_ref_, acc_ref_;
         geometry_msgs::WrenchStamped force_meas_, force_torque_ref_;
 
@@ -290,6 +323,7 @@ class AerialManipulatorControl {
 
         std::vector<double> kp1_, kp2_, wp_, wd_, M_, B_, K_, dead_zone_, kp0_;
         std::vector<double> q_manipulator_setpoint_;
+        std::vector<double> manipulator_q_home_;
 
         rosgraph_msgs::Clock clock_;
 
@@ -318,7 +352,7 @@ class AerialManipulatorControl {
             xq_(0.0),
             yq_(0.0),
             zq_(0.0),
-            alpha_(0.0) {
+            alpha_(1.0) {
 
             Tuav_arm_ <<  1,  0,  0,  0,
                           0,  1,  0,  0,
@@ -417,6 +451,12 @@ class AerialManipulatorControl {
             pose_ref_ = msg;
             vel_ref_ = geometry_msgs::TwistStamped();
             acc_ref_ = geometry_msgs::TwistStamped();
+        };
+
+        bool setHomePositionManipulatorCb(std_srvs::Empty::Request  &req, std_srvs::Empty::Response &res) {
+            q_manipulator_setpoint_ = manipulator_q_home_;
+            this->publishManipulatorSetpoints();
+            return true;
         };
 
         bool startControlCb(std_srvs::SetBool::Request  &req, std_srvs::SetBool::Response &res) {
@@ -738,6 +778,7 @@ int main(int argc, char **argv)
     ros::Publisher manipulator_position_local_pub_ros_ = n.advertise<geometry_msgs::PoseStamped>("aerial_manipulator_control/end_effector/pose_local", 1);
 
     ros::ServiceServer start_control_ros_srv = n.advertiseService("aerial_manipulator_control/start", &AerialManipulatorControl::startControlCb, &aerial_manipulator_control);
+    ros::ServiceServer set_manipulator_home_ros_srv = n.advertiseService("aerial_manipulator_control/manipulator/home", &AerialManipulatorControl::setHomePositionManipulatorCb, &aerial_manipulator_control);
 
     while (ros::Time::now().toSec() == 0 && ros::ok()) {
         ROS_INFO("[AerialManipulatorControl] Waiting for clock server to start");
