@@ -21,32 +21,7 @@
 #include "yaml-cpp/yaml.h"
 #include <eigen3/Eigen/Eigen>
 
-#include "ceres/ceres.h"
-
 #include <aerial_manipulators_control/ManipulatorControl.h>
-
-class iKCostFunctor {
-    public: 
-        iKCostFunctor()
-        {};
-
-        void set_ik_func(std::function<bool(geometry_msgs::Pose, int, double)> ik_func)
-        {
-            ik_func_ = ik_func;
-        };
-
-        bool ik(geometry_msgs::Pose end_effector_pose, int attempts, double timeout) {
-            return ik_func_(end_effector_pose, attempts, timeout);
-        }
-
-        template <typename T>
-        bool operator()(const T* const alpha, T* residual) const {
-            //e[0] = k_ - x[0] * y[0] - x[1] * y[1];
-            //return true;
-        };
-
-        std::function<bool(geometry_msgs::Pose, int, double)> ik_func_;
-};
 
 class AerialManipulatorControl {
     private:
@@ -135,6 +110,18 @@ class AerialManipulatorControl {
                 0,   0,   0,   1;
         };
 
+        double norm(geometry_msgs::Pose p1, geometry_msgs::Pose p2) {
+            double n, dx, dy, dz;
+
+            dx =  p1.position.x - p2.position.x;
+            dy =  p1.position.y - p2.position.y;
+            dz =  p1.position.z - p2.position.z;
+
+            n = sqrt(dx*dx + dy*dy + dz*dz);
+
+            return n;
+        };
+
         void quaternion2euler(float *quaternion, float *euler) {
             euler[0] = atan2(2 * (quaternion[0] * quaternion[1] + 
                 quaternion[2] * quaternion[3]), 1 - 2 * (quaternion[1] * quaternion[1]
@@ -182,14 +169,18 @@ class AerialManipulatorControl {
             Tend_effector_arm_ = Tarm_end_effector_.inverse();
         };
 
-        void aerial_manipulator_inverse_kinematics() {
-            Eigen::Vector4d dP, dPuav, dPmanipulator, aa;
+        void aerial_manipulator_inverse_kinematics(double step_size) {
+            double alpha, alpha_min = 0.0, alpha_max = 10.0, cost, cost_optimal = -1.0;
+            double alpha_optimal = alpha_min - 1.0;
+            geometry_msgs::Pose manipulator_command_pose, uav_command_pose;
+            Eigen::Vector4d dP, dPuav, dPmanipulator, dPmanipulator_local; 
+
+
             Eigen::Matrix4d Tworld_end_effector_command;
             bool ik_found = false;
-
-            ceres::Problem ik_problem;
-            ceres::Solver::Options ik_problem_options;
-            ceres::Solver::Summary ik_problem_summary;
+            double opti_alpha = 1;
+            bool first_flag = false;
+            double opti_res;
 
 
             dP(0) = aerial_manipulator_command_pose_[0].pose.position.x - aerial_manipulator_command_pose_[1].pose.position.x;
@@ -197,59 +188,78 @@ class AerialManipulatorControl {
             dP(2) = aerial_manipulator_command_pose_[0].pose.position.z - aerial_manipulator_command_pose_[1].pose.position.z;
             dP(3) = 0.0;
 
-            dPuav = alpha_ * dP;
-            dPmanipulator = (1 - alpha_) * dP;
+            uav_home_pose_ = uav_command_pose_.pose;
 
             //pozicija za koju se mora pomaktnuti letjelica je alpha puta dx,
             //pozicija za koju se mora pomaknuti rukica je (1-alpha) puta dx,
+            for (alpha = alpha_min; alpha <= alpha_max + step_size/2.0; alpha += step_size) {
 
+                dPuav = alpha * dP;
+                dPmanipulator = (1 - alpha) * dP;
 
+                dPmanipulator_local = Tarm_uav_ * Tuav_origin_world_ * dPmanipulator;
 
+                manipulator_command_pose.position.x = manipulator_command_pose_.pose.position.x + dPmanipulator_local(0);
+                manipulator_command_pose.position.y = manipulator_command_pose_.pose.position.y + dPmanipulator_local(1);
+                manipulator_command_pose.position.z = manipulator_command_pose_.pose.position.z + dPmanipulator_local(2);
+                manipulator_command_pose.orientation.x = manipulator_command_pose_.pose.orientation.x;
+                manipulator_command_pose.orientation.y = manipulator_command_pose_.pose.orientation.y;
+                manipulator_command_pose.orientation.z = manipulator_command_pose_.pose.orientation.z;
+                manipulator_command_pose.orientation.w = manipulator_command_pose_.pose.orientation.w;
 
+                uav_command_pose.position.x = uav_command_pose_.pose.position.x + dPuav(0);
+                uav_command_pose.position.y = uav_command_pose_.pose.position.y + dPuav(1);
+                uav_command_pose.position.z = uav_command_pose_.pose.position.z + dPuav(2);
+                uav_command_pose.orientation.x = aerial_manipulator_command_pose_[0].pose.orientation.x;
+                uav_command_pose.orientation.y = aerial_manipulator_command_pose_[0].pose.orientation.y;
+                uav_command_pose.orientation.z = aerial_manipulator_command_pose_[0].pose.orientation.z;
+                uav_command_pose.orientation.w = aerial_manipulator_command_pose_[0].pose.orientation.w;
 
+                if (manipulator_control_.isPositionFeasible(manipulator_command_pose, 10, 0.001)) {
+                    cost = lambda_manipulator_ * this->norm(manipulator_home_pose_, manipulator_command_pose) + 
+                           lambda_uav_ * this->norm(uav_command_pose, uav_home_pose_);
 
-            aa = Tarm_uav_ * Tuav_origin_world_ * dP;
+                    if (alpha_optimal < alpha_min) {
+                        alpha_optimal = alpha;
+                        cost_optimal = cost;
+                    }
+                    else if (cost_optimal > cost) {
+                        alpha_optimal = alpha;
+                        cost_optimal = cost;
+                    }
+                }
+            }
 
+            if (alpha_optimal < alpha_min) alpha_optimal = 1.0;
 
- //Tworld_end_effector_ = Tworld_uav_origin_;// * Tuav_arm_ * Tarm_end_effector_;
-            //std::cout<<dP<<std::endl;
-            //std::cout<<dPuav<<std::endl;
-            //std::cout<<dPmanipulator<<std::endl;
-            //std::cout<<std::endl;
+            dPuav = alpha_optimal * dP;
+            dPmanipulator = (1.0 - alpha_optimal) * dP;
+
+            dPmanipulator_local = Tarm_uav_ * Tuav_origin_world_ * dPmanipulator;
 
             uav_command_pose_.header.stamp = this->getTime();
             uav_command_pose_.header.frame_id = "uav";
-            uav_command_pose_.pose.position.x += dPuav(0);
-            uav_command_pose_.pose.position.y += dPuav(1);
-            uav_command_pose_.pose.position.z += dPuav(2);
+            uav_command_pose_.pose.position.x = uav_command_pose_.pose.position.x + dPuav(0);
+            uav_command_pose_.pose.position.y = uav_command_pose_.pose.position.y + dPuav(1);
+            uav_command_pose_.pose.position.z = uav_command_pose_.pose.position.z + dPuav(2);
             uav_command_pose_.pose.orientation.x = aerial_manipulator_command_pose_[0].pose.orientation.x;
             uav_command_pose_.pose.orientation.y = aerial_manipulator_command_pose_[0].pose.orientation.y;
             uav_command_pose_.pose.orientation.z = aerial_manipulator_command_pose_[0].pose.orientation.z;
             uav_command_pose_.pose.orientation.w = aerial_manipulator_command_pose_[0].pose.orientation.w;
 
-            //manipulator_command_pose_.header.stamp = this->getTime();
-            //manipulator_command_pose_.header.frame_id = "manipulator";
-            //manipulator_command_pose_.pose.position.x = -0.4163;
-            //manipulator_command_pose_.pose.position.y = 0.0869;
-            //manipulator_command_pose_.pose.position.z = 0.0;
-            //manipulator_command_pose_.pose.orientation.x = 0.0;
-            //manipulator_command_pose_.pose.orientation.y = -0.707;
-            //manipulator_command_pose_.pose.orientation.z = 0.7070;
-            //manipulator_command_pose_.pose.orientation.w = 0.0; 
 
-            q_manipulator_setpoint_ = manipulator_control_.calculateJointSetpoints(manipulator_command_pose_.pose, ik_found, 10, 0.01);
+            manipulator_command_pose_.header.stamp = this->getTime();
+            manipulator_command_pose_.header.frame_id = "manipulator";
+            manipulator_command_pose_.pose.position.x = manipulator_command_pose_.pose.position.x + dPmanipulator_local(0);
+            manipulator_command_pose_.pose.position.y = manipulator_command_pose_.pose.position.y + dPmanipulator_local(1);
+            manipulator_command_pose_.pose.position.z = manipulator_command_pose_.pose.position.z + dPmanipulator_local(2);
+            manipulator_command_pose_.pose.orientation.x = manipulator_command_pose_.pose.orientation.x;
+            manipulator_command_pose_.pose.orientation.y = manipulator_command_pose_.pose.orientation.y;
+            manipulator_command_pose_.pose.orientation.z = manipulator_command_pose_.pose.orientation.z;
+            manipulator_command_pose_.pose.orientation.w = manipulator_command_pose_.pose.orientation.w;
 
-            std::cout<<ik_cost_functor_.ik(manipulator_command_pose_.pose, 10, 0.01)<<std::endl;
-            //uav_command_pose_.pose.orientation.x = aerial_manipulator_command_pose_[0].pose.orientation.x;
-            //uav_command_pose_.pose.orientation.y = aerial_manipulator_command_pose_[0].pose.orientation.y;
-            //uav_command_pose_.pose.orientation.z = aerial_manipulator_command_pose_[0].pose.orientation.z;
-            //uav_command_pose_.pose.orientation.w = aerial_manipulator_command_pose_[0].pose.orientation.w;
-
-            //std::cout<<manipulator_command_pose_<<std::endl;
-            //std::cout<<std::endl;
-            //calculateJointSetpoints(geometry_msgs::Pose end_effector_pose, bool &found_ik_flag)
-
-
+            q_manipulator_setpoint_ = manipulator_control_.calculateJointSetpoints(manipulator_command_pose_.pose, ik_found, 10, 0.001);
+            std::cout<<alpha_optimal<<std::endl;
         }
 
         void LoadParameters(std::string file) {
@@ -257,7 +267,7 @@ class AerialManipulatorControl {
             std::vector<double> manipulator_origin;
             std::vector<int> manipulator_q_directions;
 
-            manipulator_origin = config["origin"]["manipulator"].as<std::vector<double> >();
+            manipulator_origin = config["manipulator"]["origin"].as<std::vector<double> >();
             manipulator_q_directions = config["manipulator"]["directions"].as<std::vector<int> >();
             manipulator_q_home_ = config["manipulator"]["home"].as<std::vector<double> >();
 
@@ -280,6 +290,9 @@ class AerialManipulatorControl {
             kp0_ = config["AIC"]["INITIAL_GAINS"]["Ke"].as<std::vector<double> >();
             wp_ = config["AIC"]["WEIGHTING_FACTORS"]["Wp"].as<std::vector<double> >();
             wd_ = config["AIC"]["WEIGHTING_FACTORS"]["Wd"].as<std::vector<double> >();
+
+            lambda_uav_ = config["UAV"]["lambda"].as<double>();
+            lambda_manipulator_ = config["manipulator"]["lambda"].as<double>();
             
             impedance_control_x_.setImpedanceFilterMass(M_[0]);
             impedance_control_x_.setImpedanceFilterDamping(B_[0]);
@@ -313,11 +326,11 @@ class AerialManipulatorControl {
         bool start_flag_, force_msg_received_;
         double *xr_, *xc_, *yr_, *yc_, *zr_, *zc_, *xKp_, *yKp_, *zKp_;
         double qxc_[3], qyc_[3], qzc_[3], qwc_[3];
-        double xq_, yq_, zq_, alpha_;
+        double xq_, yq_, zq_, lambda_manipulator_, lambda_uav_;
 
         geometry_msgs::PoseStamped uav_pose_meas_, manipulator_pose_meas_, uav_command_pose_, manipulator_command_pose_;
         geometry_msgs::PoseStamped pose_ref_, pose_meas_, aerial_manipulator_command_pose_[2];
-        geometry_msgs::Pose manipulator_home_pose_;
+        geometry_msgs::Pose manipulator_home_pose_, uav_home_pose_;
         geometry_msgs::TwistStamped vel_ref_, acc_ref_;
         geometry_msgs::WrenchStamped force_meas_, force_torque_ref_;
 
@@ -334,9 +347,6 @@ class AerialManipulatorControl {
         ManipulatorControl manipulator_control_;
         ImpedanceControl impedance_control_z_, impedance_control_y_, impedance_control_x_;
         aic aic_control_z_, aic_control_x_, aic_control_y_;
-
-        std::function<bool(geometry_msgs::Pose, int, double)> ik_function_;
-        iKCostFunctor ik_cost_functor_;
 
     public:
         AerialManipulatorControl(int rate, bool simulation):
@@ -358,8 +368,7 @@ class AerialManipulatorControl {
             qwc_(),
             xq_(0.0),
             yq_(0.0),
-            zq_(0.0),
-            alpha_(1.0) {
+            zq_(0.0) {
 
             Tuav_arm_ <<  1,  0,  0,  0,
                           0,  1,  0,  0,
@@ -377,14 +386,6 @@ class AerialManipulatorControl {
                                   0, 1, 0, 0, 
                                   0, 0, 1, 0,
                                   0, 0, 0, 1;
-
-            ik_function_ = [this](const geometry_msgs::Pose pose, int attempts, double timeout)
-            { 
-                return manipulator_control_.isPositionFeasible(pose, attempts, timeout); 
-            };
-
-            ik_cost_functor_.set_ik_func(ik_function_);
-
         };
 
         void initManipulatorControl(ros::NodeHandle *n, std::string robot_model_name, std::string joint_model_group_name, std::string param_file) {
@@ -496,6 +497,8 @@ class AerialManipulatorControl {
                 uav_command_pose_ = uav_pose_meas_;
                 manipulator_command_pose_ = manipulator_pose_meas_;
                 q_manipulator_setpoint_ = manipulator_control_.getJointMeasurements();
+                manipulator_home_pose_ = manipulator_control_.getEndEffectorPosition(manipulator_q_home_).pose;
+                uav_home_pose_ = uav_command_pose_.pose;
 
                 vel_ref_.twist.linear.x = 0;
                 vel_ref_.twist.linear.y = 0;
@@ -645,7 +648,7 @@ class AerialManipulatorControl {
             //std::cout<<manipulator_control_.getJacobian().completeOrthogonalDecomposition().pseudoInverse()<<std::endl;
             //std::cout<<std::endl;
 
-            this->aerial_manipulator_inverse_kinematics();
+            this->aerial_manipulator_inverse_kinematics(0.2);
         };
 
 
@@ -739,16 +742,6 @@ class AerialManipulatorControl {
         };
 };
 
-struct CostFunctor {
-  template <typename T>
-  bool operator()(const T* const x, T* residual) const {
-    //if(x[0] >= static_cast<T>(9)) return false;
-    residual[0] = 10.0 - x[0];
-    return true;
-  }
-};
-
-
 int main(int argc, char **argv)
 {
     int rate;
@@ -816,27 +809,6 @@ int main(int argc, char **argv)
         ros::Duration(0.5).sleep();
     }
     ROS_INFO("[AerialManipulatorControl] Waiting aerial manipulator control to start...");
-
-    double x = 0.5;
-  const double initial_x = x;
-        // Build the problem.
-      ceres::Problem problem;
-      // Set up the only cost function (also known as residual). This uses
-      // auto-differentiation to obtain the derivative (jacobian).
-      ceres::CostFunction* cost_function =
-          new ceres::AutoDiffCostFunction<CostFunctor, 1, 1>(new CostFunctor);
-      problem.AddResidualBlock(cost_function, nullptr, &x);
-      // Run the solver!
-      //problem.AddParameterBlock(&x, 1);
-      problem.SetParameterUpperBound(&x, 0, 8);
-
-      ceres::Solver::Options options;
-      options.minimizer_progress_to_stdout = true;
-      ceres::Solver::Summary summary;
-      ceres::Solve(options, &problem, &summary);
-      std::cout << summary.BriefReport() << "\n";
-      std::cout << "x : " << initial_x
-                << " -> " << x << "\n";
 
     time_old = aerial_manipulator_control.getTime().toSec();
 
