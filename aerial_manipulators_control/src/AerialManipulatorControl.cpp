@@ -175,20 +175,12 @@ class AerialManipulatorControl {
             geometry_msgs::Pose manipulator_command_pose, uav_command_pose;
             Eigen::Vector4d dP, dPuav, dPmanipulator, dPmanipulator_local; 
 
-
-            Eigen::Matrix4d Tworld_end_effector_command;
-            bool ik_found = false;
-            double opti_alpha = 1;
-            bool first_flag = false;
-            double opti_res;
-
-
             dP(0) = aerial_manipulator_command_pose_[0].pose.position.x - aerial_manipulator_command_pose_[1].pose.position.x;
             dP(1) = aerial_manipulator_command_pose_[0].pose.position.y - aerial_manipulator_command_pose_[1].pose.position.y;
             dP(2) = aerial_manipulator_command_pose_[0].pose.position.z - aerial_manipulator_command_pose_[1].pose.position.z;
             dP(3) = 0.0;
 
-            uav_home_pose_ = uav_command_pose_.pose;
+            /*uav_home_pose_ = uav_command_pose_.pose;
 
             //pozicija za koju se mora pomaktnuti letjelica je alpha puta dx,
             //pozicija za koju se mora pomaknuti rukica je (1-alpha) puta dx,
@@ -228,7 +220,7 @@ class AerialManipulatorControl {
                         cost_optimal = cost;
                     }
                 }
-            }
+            }*/
 
             if (alpha_optimal < alpha_min) alpha_optimal = 1.0;
 
@@ -258,8 +250,8 @@ class AerialManipulatorControl {
             manipulator_command_pose_.pose.orientation.z = manipulator_command_pose_.pose.orientation.z;
             manipulator_command_pose_.pose.orientation.w = manipulator_command_pose_.pose.orientation.w;
 
-            q_manipulator_setpoint_ = manipulator_control_.calculateJointSetpoints(manipulator_command_pose_.pose, ik_found, 10, 0.001);
-            std::cout<<alpha_optimal<<std::endl;
+            q_manipulator_setpoint_ = manipulator_control_.calculateJointSetpoints(manipulator_command_pose_.pose, ik_found, 10, 0.005);
+            //std::cout<<alpha_optimal<<std::endl;
         }
 
         void LoadParameters(std::string file) {
