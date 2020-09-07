@@ -240,7 +240,7 @@ class AerialManipulatorControl {
             uav_command_pose_.pose.orientation.w = aerial_manipulator_command_pose_[0].pose.orientation.w;
 
 
-            manipulator_command_pose_.header.stamp = this->getTime();
+            /*manipulator_command_pose_.header.stamp = this->getTime();
             manipulator_command_pose_.header.frame_id = "manipulator";
             manipulator_command_pose_.pose.position.x = manipulator_command_pose_.pose.position.x + dPmanipulator_local(0);
             manipulator_command_pose_.pose.position.y = manipulator_command_pose_.pose.position.y + dPmanipulator_local(1);
@@ -248,9 +248,9 @@ class AerialManipulatorControl {
             manipulator_command_pose_.pose.orientation.x = manipulator_command_pose_.pose.orientation.x;
             manipulator_command_pose_.pose.orientation.y = manipulator_command_pose_.pose.orientation.y;
             manipulator_command_pose_.pose.orientation.z = manipulator_command_pose_.pose.orientation.z;
-            manipulator_command_pose_.pose.orientation.w = manipulator_command_pose_.pose.orientation.w;
+            manipulator_command_pose_.pose.orientation.w = manipulator_command_pose_.pose.orientation.w;*/
 
-            q_manipulator_setpoint_ = manipulator_control_.calculateJointSetpoints(manipulator_command_pose_.pose, ik_found, 10, 0.005);
+            //q_manipulator_setpoint_ = manipulator_control_.calculateJointSetpoints(manipulator_command_pose_.pose, ik_found, 10, 0.005);
             //std::cout<<alpha_optimal<<std::endl;
         }
 
@@ -661,6 +661,48 @@ class AerialManipulatorControl {
             return q_manipulator_setpoint_;
         }
 
+        void getState(std_msgs::Float64MultiArray &state_msg) {
+            double *xc, *yc, *zc, *xr, *yr, *zr, *xKp, *yKp, *zKp;
+            double *qxc, *qyc, *qzc, *qwc;
+            double xq, yq, zq;
+
+            state_msg.data.resize(31);
+
+            xc = this->getXc();
+            yc = this->getYc();
+            zc = this->getZc();
+            qxc = this->getQXc();
+            qyc = this->getQYc();
+            qzc = this->getQZc();
+            qwc = this->getQWc();
+            xr = this->getXr();
+            yr = this->getYr();
+            zr = this->getZr();
+            xKp = this->getXKp();
+            yKp = this->getYKp();
+            zKp = this->getZKp();
+            xq = this->getXq();
+            yq = this->getYq();
+            zq = this->getZq();
+
+            int j = 0;
+            for (int i = 0; i < 3; i++) {
+                state_msg.data[j++] = xr[i];
+                state_msg.data[j++] = yr[i];
+                state_msg.data[j++] = zr[i];
+                state_msg.data[j++] = xc[i];
+                state_msg.data[j++] = yc[i];
+                state_msg.data[j++] = zc[i];
+                state_msg.data[j++] = xKp[i];
+                state_msg.data[j++] = yKp[i];
+                state_msg.data[j++] = zKp[i];
+            }
+            state_msg.data[j++] = xq;
+            state_msg.data[j++] = yq;
+            state_msg.data[j++] = zq;
+            state_msg.data[j++] = this->getTime().toSec();
+        }
+
         void publishManipulatorSetpoints() {
             manipulator_control_.publishJointSetpoints(q_manipulator_setpoint_);
         }
@@ -741,6 +783,7 @@ int main(int argc, char **argv)
     double time, time_old, dt;
     Eigen::Matrix4d Tworld_end_effector;
     std_msgs::Float64MultiArray transformation_msg;
+    std_msgs::Float64MultiArray state_msg;
 
     geometry_msgs::PoseStamped commanded_uav_position_msg;
     geometry_msgs::PoseStamped commanded_aerial_manipulator_position_msg;
@@ -838,6 +881,9 @@ int main(int argc, char **argv)
 
                 commanded_aerial_manipulator_position_msg = aerial_manipulator_control.getAerialManipulatorCommandPose();
                 aerial_manipulator_pose_commanded_pub_.publish(commanded_aerial_manipulator_position_msg);
+
+                aerial_manipulator_control.getState(state_msg);
+                state_pub_.publish(state_msg);
             }
 
             manipulator_position_local_pub_ros_.publish(end_effector_pose);
