@@ -1,5 +1,6 @@
 #include "ros/ros.h"
 #include <ros/package.h>
+#include <dynamic_reconfigure/server.h>
 
 #include <impedance_control/impedance_control.h>
 #include <impedance_control/aic.h>
@@ -22,6 +23,7 @@
 #include <eigen3/Eigen/Eigen>
 
 #include <aerial_manipulators_control/ManipulatorControl.h>
+#include <aerial_manipulators_control/ImpedanceControlConfig.h>
 
 class AerialManipulatorControl {
     private:
@@ -173,12 +175,17 @@ class AerialManipulatorControl {
             double alpha, alpha_min = 0.0, alpha_max = 10.0, cost, cost_optimal = -1.0;
             double alpha_optimal = alpha_min - 1.0;
             geometry_msgs::Pose manipulator_command_pose, uav_command_pose;
-            Eigen::Vector4d dP, dPuav, dPmanipulator, dPmanipulator_local; 
+            Eigen::Vector4d dPuav, dPmanipulator, dPmanipulator_local;
+            Eigen::VectorXd dP(6);
+            Eigen::MatrixXd J_manipulator, J_uav(6, 3);
 
             dP(0) = aerial_manipulator_command_pose_[0].pose.position.x - aerial_manipulator_command_pose_[1].pose.position.x;
             dP(1) = aerial_manipulator_command_pose_[0].pose.position.y - aerial_manipulator_command_pose_[1].pose.position.y;
             dP(2) = aerial_manipulator_command_pose_[0].pose.position.z - aerial_manipulator_command_pose_[1].pose.position.z;
             dP(3) = 0.0;
+            dP(4) = 0.0;
+            dP(5) = 0.0;
+
 
             /*uav_home_pose_ = uav_command_pose_.pose;
 
@@ -222,22 +229,24 @@ class AerialManipulatorControl {
                 }
             }*/
 
-            if (alpha_optimal < alpha_min) alpha_optimal = 1.0;
+            //if (alpha_optimal < alpha_min) alpha_optimal = 1.0;
 
-            dPuav = alpha_optimal * dP;
-            dPmanipulator = (1.0 - alpha_optimal) * dP;
+            //dPuav = alpha_optimal * dP;
+            //dPmanipulator = (1.0 - alpha_optimal) * dP;
 
-            dPmanipulator_local = Tarm_uav_ * Tuav_origin_world_ * dPmanipulator;
+            //dPmanipulator_local = Tarm_uav_ * Tuav_origin_world_ * dPmanipulator;
 
             uav_command_pose_.header.stamp = this->getTime();
             uav_command_pose_.header.frame_id = "uav";
-            uav_command_pose_.pose.position.x = uav_command_pose_.pose.position.x + dPuav(0);
-            uav_command_pose_.pose.position.y = uav_command_pose_.pose.position.y + dPuav(1);
-            uav_command_pose_.pose.position.z = uav_command_pose_.pose.position.z + dPuav(2);
+            uav_command_pose_.pose.position.x = uav_command_pose_.pose.position.x + dP(0);
+            uav_command_pose_.pose.position.y = uav_command_pose_.pose.position.y + dP(1);
+            uav_command_pose_.pose.position.z = uav_command_pose_.pose.position.z + dP(2);
             uav_command_pose_.pose.orientation.x = aerial_manipulator_command_pose_[0].pose.orientation.x;
             uav_command_pose_.pose.orientation.y = aerial_manipulator_command_pose_[0].pose.orientation.y;
             uav_command_pose_.pose.orientation.z = aerial_manipulator_command_pose_[0].pose.orientation.z;
             uav_command_pose_.pose.orientation.w = aerial_manipulator_command_pose_[0].pose.orientation.w;
+
+            //manipulator_control_.getJacobian().completeOrthogonalDecomposition().pseudoInverse()
 
 
             /*manipulator_command_pose_.header.stamp = this->getTime();
@@ -315,7 +324,7 @@ class AerialManipulatorControl {
 
         int rate_, number_of_joints_, uav_degrees_of_freedom_;
         bool simulation_flag_, uav_pose_meas_received_;
-        bool start_flag_, force_msg_received_;
+        bool start_flag_, force_msg_received_, reconfigure_start_;
         double *xr_, *xc_, *yr_, *yc_, *zr_, *zc_, *xKp_, *yKp_, *zKp_;
         double qxc_[3], qyc_[3], qzc_[3], qwc_[3];
         double xq_, yq_, zq_, lambda_manipulator_, lambda_uav_;
@@ -360,7 +369,8 @@ class AerialManipulatorControl {
             qwc_(),
             xq_(0.0),
             yq_(0.0),
-            zq_(0.0) {
+            zq_(0.0),
+            reconfigure_start_(false) {
 
             Tuav_arm_ <<  1,  0,  0,  0,
                           0,  1,  0,  0,
@@ -383,12 +393,55 @@ class AerialManipulatorControl {
         void initManipulatorControl(ros::NodeHandle *n, std::string robot_model_name, std::string joint_model_group_name, std::string param_file) {
             LoadParameters(param_file);
 
-            manipulator_control_.setManipulatorName(robot_model_name, joint_model_group_name);
-            manipulator_control_.init(n);
+            //manipulator_control_.setManipulatorName(robot_model_name, joint_model_group_name);
+            //manipulator_control_.init(n);
 
             number_of_joints_ = manipulator_control_.getNumberOfJoints();
 
             q_manipulator_setpoint_ = std::vector<double>(number_of_joints_, 0);
+        };
+
+        void reconfigureCb(aerial_manipulators_control::ImpedanceControlConfig &config, uint32_t level) {
+
+            if (!reconfigure_start_) {
+                config.kp1_x = kp1_[0];
+                config.kp2_x = kp2_[0];
+                config.wp_x = wp_[0];
+                config.wd_x = wd_[0];
+
+                config.kp1_y = kp1_[1];
+                config.kp2_y = kp2_[1];
+                config.wp_y = wp_[1];
+                config.wd_y = wd_[1];
+
+                config.kp1_z = kp1_[2];
+                config.kp2_z = kp2_[2];
+                config.wp_z = wp_[2];
+                config.wd_z = wd_[2];
+                reconfigure_start_ = true;
+            }
+            else {
+                kp1_[0] = config.kp1_x;
+                kp2_[0] = config.kp2_x;
+                wp_[0] = config.wp_x;
+                wd_[0] = config.wd_x;
+
+                kp1_[1] = config.kp1_y;
+                kp2_[1] = config.kp2_y;
+                wp_[1] = config.wp_y;
+                wd_[1] = config.wd_y;
+
+                kp1_[2] = config.kp1_z;
+                kp2_[2] = config.kp2_z;
+                wp_[2] = config.wp_z;
+                wd_[2] = config.wd_z;
+
+                aic_control_x_.setAdaptiveParameters(kp1_[0], kp2_[0], wp_[0], wd_[0]);
+                aic_control_y_.setAdaptiveParameters(kp1_[1], kp2_[1], wp_[1], wd_[1]);
+                aic_control_z_.setAdaptiveParameters(kp1_[2], kp2_[2], wp_[2], wd_[2]);
+
+                initializeAdaptationLaws();
+            }   
         };
 
         void trajectoryRefCb(const trajectory_msgs::MultiDOFJointTrajectory &msg) {
@@ -488,8 +541,8 @@ class AerialManipulatorControl {
                 aerial_manipulator_command_pose_[1] = pose_ref_;
                 uav_command_pose_ = uav_pose_meas_;
                 manipulator_command_pose_ = manipulator_pose_meas_;
-                q_manipulator_setpoint_ = manipulator_control_.getJointMeasurements();
-                manipulator_home_pose_ = manipulator_control_.getEndEffectorPosition(manipulator_q_home_).pose;
+                //q_manipulator_setpoint_ = manipulator_control_.getJointMeasurements();
+                //manipulator_home_pose_ = manipulator_control_.getEndEffectorPosition(manipulator_q_home_).pose;
                 uav_home_pose_ = uav_command_pose_.pose;
 
                 vel_ref_.twist.linear.x = 0;
@@ -538,8 +591,8 @@ class AerialManipulatorControl {
         void calculateEndEffectorPosition() {
             float orientationEuler[3], orientationQuaternion[3];
 
-            this->fetchLocalEndEffectorPosition();
-            Tworld_end_effector_ = Tworld_uav_origin_ * Tuav_arm_ * Tarm_end_effector_;
+            //this->fetchLocalEndEffectorPosition();
+            Tworld_end_effector_ = Tworld_uav_origin_ /* Tuav_arm_ * Tarm_end_effector_*/;
             Tend_effector_world_ = Tworld_end_effector_.inverse();
 
             getAnglesFromRotationTranslationMatrix(Tworld_end_effector_, orientationEuler);
@@ -704,11 +757,11 @@ class AerialManipulatorControl {
         }
 
         void publishManipulatorSetpoints() {
-            manipulator_control_.publishJointSetpoints(q_manipulator_setpoint_);
+            //manipulator_control_.publishJointSetpoints(q_manipulator_setpoint_);
         }
 
         bool isReady(void) {
-            return force_msg_received_ && uav_pose_meas_received_ && manipulator_control_.isStarted();
+            return force_msg_received_ && uav_pose_meas_received_ /*&& manipulator_control_.isStarted()*/;
         };
 
         double *getXc() {
@@ -830,6 +883,12 @@ int main(int argc, char **argv)
 
     ros::ServiceServer start_control_ros_srv = n.advertiseService("aerial_manipulator_control/start", &AerialManipulatorControl::startControlCb, &aerial_manipulator_control);
     ros::ServiceServer set_manipulator_home_ros_srv = n.advertiseService("aerial_manipulator_control/manipulator/home", &AerialManipulatorControl::setHomePositionManipulatorCb, &aerial_manipulator_control);
+
+    dynamic_reconfigure::Server<aerial_manipulators_control::ImpedanceControlConfig> server;
+    dynamic_reconfigure::Server<aerial_manipulators_control::ImpedanceControlConfig>::CallbackType reconfigure;
+
+    reconfigure = boost::bind(&AerialManipulatorControl::reconfigureCb, &aerial_manipulator_control, _1, _2);
+    server.setCallback(reconfigure);
 
     while (ros::Time::now().toSec() == 0 && ros::ok()) {
         ROS_INFO("[AerialManipulatorControl] Waiting for clock server to start");

@@ -27,6 +27,7 @@ find_package(Eigen3 REQUIRED)
 
 generate_dynamic_reconfigure_options(
     config/JointCtlParams.cfg
+    config/impedance_control_params.cfg
     )
 
 catkin_package(
