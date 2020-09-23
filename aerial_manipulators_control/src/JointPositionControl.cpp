@@ -81,7 +81,7 @@ void JointControl::configCallback(aerial_manipulators_control::JointCtlParamsCon
     {
         // The following code just sets up the P,I,D gains for all controllers
 
-				joint_pid_.set_kp(config.kp);
+		joint_pid_.set_kp(config.kp);
         joint_pid_.set_ki(config.ki);
         joint_pid_.set_kd(config.kd);
     }
@@ -215,7 +215,7 @@ int main(int argc, char **argv)
 	int i;
 
 	ros::NodeHandle private_node_handle_("~");
-	std::string path = ros::package::getPath("aerial_manipulators");
+	std::string path = ros::package::getPath("aerial_manipulators_control");
 	std::string controller_params_file;
 
 	if (argc < 2)

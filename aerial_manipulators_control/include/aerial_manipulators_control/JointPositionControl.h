@@ -8,6 +8,7 @@
 #include <geometry_msgs/Vector3.h>
 #include <sensor_msgs/JointState.h>
 #include <rosgraph_msgs/Clock.h>
+#include <trajectory_msgs/JointTrajectory.h>
 #include <dynamic_reconfigure/server.h>
 #include <aerial_manipulators_control/JointCtlParamsConfig.h>
 
@@ -46,6 +47,7 @@ class JointPositionControl{
 		rosgraph_msgs::Clock clock_;
 
 		ros::Subscriber joint_states_sub_ros_, clock_ros_sub_;
+		ros::Subscriber joint_trajectory_sub_ros_;
 		std::vector<ros::Subscriber> joint_ref_ros_sub_;
 		std::vector<ros::Publisher> joint_command_pub_ros_, pid_state_pub_ros_;
 		std::vector<std::string> joint_name_;
