@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: aerial_manipulators_description
+    relative_path: urdf/wp_manipulator_3rx_moveit.base.urdf.xacro
+    xacro_args: ""
+  SRDF:
+    relative_path: config/wp_manipulator_3rx.srdf
+  CONFIG:
+    author_name: Marko Car
+    author_email: marko.car@fer.hr
+    generated_timestamp: 1600937417

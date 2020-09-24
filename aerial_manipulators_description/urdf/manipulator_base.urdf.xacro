@@ -231,18 +231,18 @@
 
     <link name='base'>
       <inertial>
-        <mass value="${mass5}" />
-        <origin xyz="0 -${a0/2} 0" rpy="0 0 0"/>
+        <mass value="${mass2}" />
+        <origin xyz="${a2/2} 0 0" rpy="0 0 0"/>
         <inertia
-          ixx="${1/2 * mass5 * rad * rad}" ixy="0" ixz="0"
-          iyx="0" iyy="${1/12 * mass5 * (3*rad*rad + a0*a0)}" iyz="0"
-          izx="0" izy="0" izz="${1/12 * mass5 * (3*rad*rad + a0*a0)}"/>
+          ixx="${1/2 * mass2 * rad * rad}" ixy="0" ixz="0"
+          iyx="0" iyy="${1/12 * mass2 * (3*rad*rad + a2*a2)}" iyz="0"
+          izx="0" izy="0" izz="${1/12 * mass2 * (3*rad*rad + a2*a2)}"/>
       </inertial>
 
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="0 0 0" rpy="0 0 -${pi / 2}" />
         <geometry>
-          <mesh filename="package://aerial_manipulators_description/meshes/wp_manipulator/base.dae"
+          <mesh filename="package://aerial_manipulators_description/meshes/wp_manipulator/link2.dae"
             scale="1 1 1" />
         </geometry>
       </visual>
