@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+
+<robot name="wp_manipulator_3rx" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find aerial_manipulators_description)/urdf/manipulator_base.urdf.xacro" />
+
+  <link name="world"></link>
+
+  <xacro:wp_manipulator_3rx
+    parent="world">
+    <origin xyz="0 0 0.035" rpy="${pi/2} 0 ${pi}"/>
+  </xacro:wp_manipulator_3rx>
+
+   <xacro:transmisija
+    trans_number="1"
+    joint_name="joint1">
+  </xacro:transmisija>
+
+  <xacro:transmisija
+    trans_number="2"
+    joint_name="joint2">
+  </xacro:transmisija>
+
+  <xacro:transmisija
+    trans_number="3"
+    joint_name="joint3">
+  </xacro:transmisija>
+</robot>

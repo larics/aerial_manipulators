@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+
+<robot name="wp_manipulator_3r" xmlns:xacro="http://ros.org/wiki/xacro">
+  <!--
+  It seems that the xacro:property does not allow to use substitution args. Therefore, instead xacro parameter ${namespace}, subsitution argument is used $(arg name). This is<
+  <xacro:property name="namespace" value="$(arg name)" />
+  -->
+
+  <xacro:property name="enable_bag_plugin" value="false" />
+  <xacro:property name="bag_file" value="wp_manipulator_3rx.bag" />
+
+  <!-- Instantiate cmanip "mechanics" -->
+  <xacro:include filename="$(find aerial_manipulators_description)/urdf/wp_manipulator_3rx.base.urdf.xacro" />
+
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>/wp_manipulator_3rx</robotNamespace>
+    </plugin>
+  </gazebo>
+
+</robot>
