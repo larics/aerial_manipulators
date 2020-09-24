@@ -2,6 +2,7 @@
 
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
   <xacro:property name="pi" value="3.1415926535897931" />
+  <xacro:property name="mass2" value="0.03"/>
 
   <xacro:macro name="wp_manipulator" params="parent *origin">
 
