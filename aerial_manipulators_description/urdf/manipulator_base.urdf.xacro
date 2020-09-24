@@ -2,7 +2,20 @@
 
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
   <xacro:property name="pi" value="3.1415926535897931" />
+  <xacro:property name="a0" value="0.04526"/>
+  <xacro:property name="a1" value="0.122490"/>
+  <xacro:property name="a2" value="0.1365"/>
+  <xacro:property name="a3" value="0.075511"/>
+  <xacro:property name="a4" value="0.072489"/>
+  <xacro:property name="d5" value="0.04526"/>
+  <xacro:property name="theta1" value="${pi/2}"/>
+  <xacro:property name="alpha2" value="${-pi/2}"/>
+
   <xacro:property name="mass2" value="0.03"/>
+  <xacro:property name="mass1" value="${mass2*a1/a2}"/>
+  <xacro:property name="mass3" value="${mass2*a3/a2}"/>
+  <xacro:property name="mass4" value="${mass2*a4/a2}"/>
+  <xacro:property name="mass5" value="${mass2*d5/a2}"/>
 
   <xacro:macro name="wp_manipulator" params="parent *origin">
 
