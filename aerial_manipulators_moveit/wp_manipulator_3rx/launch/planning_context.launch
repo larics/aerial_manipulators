@@ -6,7 +6,7 @@
   <arg name="robot_description" default="wp_manipulator_3rx"/>
 
   <!-- Load universal robot description format (URDF) -->
-  <param name="$(arg robot_description)" command="xacro  '$(find aerial_manipulators_description)/urdf/wp_manipulator_3rx_moveit.base.urdf.xacro'"/>
+  <param if="$(arg load_robot_description)" name="$(arg robot_description)" command="xacro  '$(find aerial_manipulators_description)/urdf/wp_manipulator_3rx_moveit.base.urdf.xacro'"/>
 
   <!-- The semantic description that corresponds to the URDF -->
   <param name="$(arg robot_description)_semantic" textfile="$(find wp_manipulator_3rx)/config/wp_manipulator_3rx.srdf" />
