@@ -16,6 +16,7 @@
   <xacro:property name="mass3" value="${mass2*a3/a2}"/>
   <xacro:property name="mass4" value="${mass2*a4/a2}"/>
   <xacro:property name="mass5" value="${mass2*d5/a2}"/>
+  <xacro:property name="rad" value="0.03"/>
 
   <xacro:macro name="wp_manipulator" params="parent *origin">
 
