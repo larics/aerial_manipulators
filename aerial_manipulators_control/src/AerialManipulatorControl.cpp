@@ -202,14 +202,14 @@ class AerialManipulatorControl {
             manipulator_command_pose.orientation.z = manipulator_command_pose_.pose.orientation.z;
             manipulator_command_pose.orientation.w = manipulator_command_pose_.pose.orientation.w;
 
-            q_manipulator_setpoint = manipulator_control_.calculateJointSetpoints(manipulator_command_pose, ik_found, 10, 0.005);
+            q_manipulator_setpoint = manipulator_control_.calculateJointSetpoints(manipulator_command_pose, ik_found, 10, 0.01);
 
             for (int i = 0; i < manipulator_q_home_.size(); i++) {
                 q_norm += pow(q_manipulator_setpoint[i] - manipulator_q_home_[i], 2);
             }
             q_norm = sqrt(q_norm);
 
-            if (ik_found && q_norm < 0.1) {
+            if (ik_found && q_norm < 0.4) {
                 q_manipulator_setpoint_ = q_manipulator_setpoint;
                 alpha = 0.0;
 
@@ -222,10 +222,6 @@ class AerialManipulatorControl {
                 dPmanipulator = (1.0 - alpha) * dP;
                 dPmanipulator_local = Tarm_uav_ * Tuav_origin_world_ * dPmanipulator;
             }
-
-            std::cout<<q_norm<<std::endl;
-            std::cout<<alpha<<std::endl;
-            std::cout<<dPmanipulator_local<<std::endl;
 
             uav_command_pose_.header.stamp = this->getTime();
             uav_command_pose_.header.frame_id = "uav";
@@ -247,10 +243,6 @@ class AerialManipulatorControl {
             manipulator_command_pose_.pose.orientation.z = manipulator_command_pose_.pose.orientation.z;
             manipulator_command_pose_.pose.orientation.w = manipulator_command_pose_.pose.orientation.w;
 
-
-            std::cout<<ik_found<<std::endl;
-            std::cout<<manipulator_command_pose_<<std::endl;
-            std::cout<<std::endl;
         }
 
         void LoadParameters(std::string file) {
@@ -532,7 +524,7 @@ class AerialManipulatorControl {
                 uav_command_pose_ = uav_pose_meas_;
                 manipulator_command_pose_ = manipulator_pose_meas_;
                 q_manipulator_setpoint_ = manipulator_control_.getJointMeasurements();
-                manipulator_home_pose_ = manipulator_control_.getEndEffectorPosition(manipulator_q_home_).pose;
+                manipulator_home_pose_ = manipulator_control_.getEndEffectorPositionFromQ(manipulator_q_home_).pose;
                 uav_home_pose_ = uav_command_pose_.pose;
 
                 vel_ref_.twist.linear.x = 0;

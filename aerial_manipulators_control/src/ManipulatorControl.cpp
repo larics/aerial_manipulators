@@ -246,7 +246,7 @@ geometry_msgs::PoseStamped ManipulatorControl::getEndEffectorPosition(void)
 	return end_effector_pose;
 }
 
-geometry_msgs::PoseStamped ManipulatorControl::getEndEffectorPosition(std::vector<double> q)
+geometry_msgs::PoseStamped ManipulatorControl::getEndEffectorPositionFromQ(std::vector<double> q)
 {
 	geometry_msgs::PoseStamped end_effector_pose;
 
@@ -400,7 +400,7 @@ bool ManipulatorControl::isPositionFeasible(geometry_msgs::Pose end_effector_pos
 {
 	std::vector<double> q(number_of_joints_, 0);
 
-	(*kinematic_state_)->setJointGroupPositions(joint_model_group_, q_pos_meas_);
+	//(*kinematic_state_)->setJointGroupPositions(joint_model_group_, q_pos_meas_);
 
 	bool found_ik = (*kinematic_state_)->setFromIK(joint_model_group_, end_effector_pose, attempts, timeout);
 
@@ -412,7 +412,7 @@ std::vector<double> ManipulatorControl::calculateJointSetpoints(geometry_msgs::P
 {
 	std::vector<double> q(number_of_joints_, 0);
 
-	(*kinematic_state_)->setJointGroupPositions(joint_model_group_, q_pos_meas_);
+	//(*kinematic_state_)->setJointGroupPositions(joint_model_group_, q_pos_meas_);
 
 	bool found_ik = (*kinematic_state_)->setFromIK(joint_model_group_, end_effector_pose, attempts, timeout);
 
