@@ -200,6 +200,7 @@ int ManipulatorControl::init()
 			end_effector_pose_sub_ros_ = n_->subscribe("end_effector/pose_ref", 1, &ManipulatorControl::endEffectorPoseRefCbRos, this);
 
 			dynamixel_sepoint_ros_pub_ = n_->advertise<trajectory_msgs::JointTrajectory>("joint_trajectory", 1);
+			manipulator_q_set_point_pub_ros_ = new ros::Publisher[number_of_joints_];
 			for (int i = 0; i < joint_names.size(); i++) {
 				manipulator_q_set_point_pub_ros_[i] = n_->advertise<std_msgs::Float64>(joint_names[i] + "_position_controller/command", 1);
 			}
