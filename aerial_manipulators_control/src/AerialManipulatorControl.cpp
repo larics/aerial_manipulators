@@ -15,6 +15,7 @@
 #include <rosgraph_msgs/Clock.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
+#include <trajectory_msgs/JointTrajectoryPoint.h>
 #include <std_srvs/SetBool.h>
 #include <std_srvs/Empty.h>
 
@@ -189,22 +190,22 @@ class AerialManipulatorControl {
             //calculate norm distance 
             //q_manipulator_meas = manipulator_control_.getJointMeasurements();
 
-            dPmanipulator_local = Tarm_uav_ * Tuav_origin_world_ * dP;
-            dPmanipulator_local(1) = 0.0;
-            dPmanipulator_local(2) = 0.0;
-            dPmanipulator_local(3) = 0.0;
+            //dPmanipulator_local = Tarm_uav_ * Tuav_origin_world_ * dP;
+            //dPmanipulator_local(1) = 0.0;
+            //dPmanipulator_local(2) = 0.0;
+            //dPmanipulator_local(3) = 0.0;
 
-            manipulator_command_pose.position.x = manipulator_command_pose_.pose.position.x + dPmanipulator_local(0);
-            manipulator_command_pose.position.y = manipulator_command_pose_.pose.position.y + dPmanipulator_local(1);
-            manipulator_command_pose.position.z = manipulator_command_pose_.pose.position.z + dPmanipulator_local(2);
-            manipulator_command_pose.orientation.x = manipulator_command_pose_.pose.orientation.x;
-            manipulator_command_pose.orientation.y = manipulator_command_pose_.pose.orientation.y;
-            manipulator_command_pose.orientation.z = manipulator_command_pose_.pose.orientation.z;
-            manipulator_command_pose.orientation.w = manipulator_command_pose_.pose.orientation.w;
+            //manipulator_command_pose.position.x = manipulator_command_pose_.pose.position.x + dPmanipulator_local(0);
+            //manipulator_command_pose.position.y = manipulator_command_pose_.pose.position.y + dPmanipulator_local(1);
+            //manipulator_command_pose.position.z = manipulator_command_pose_.pose.position.z + dPmanipulator_local(2);
+            //manipulator_command_pose.orientation.x = manipulator_command_pose_.pose.orientation.x;
+            //manipulator_command_pose.orientation.y = manipulator_command_pose_.pose.orientation.y;
+            //manipulator_command_pose.orientation.z = manipulator_command_pose_.pose.orientation.z;
+            //manipulator_command_pose.orientation.w = manipulator_command_pose_.pose.orientation.w;
 
-            q_manipulator_setpoint = manipulator_control_.calculateJointSetpoints(manipulator_command_pose, ik_found, 10, 0.01);
+            q_manipulator_setpoint_ = manipulator_q_home_;//manipulator_control_.calculateJointSetpoints(manipulator_command_pose, ik_found, 10, 0.01);
 
-            for (int i = 0; i < manipulator_q_home_.size(); i++) {
+            /*for (int i = 0; i < manipulator_q_home_.size(); i++) {
                 q_norm += pow(q_manipulator_setpoint[i] - manipulator_q_home_[i], 2);
             }
             q_norm = sqrt(q_norm);
@@ -221,7 +222,8 @@ class AerialManipulatorControl {
                 dPuav = alpha * dP;
                 dPmanipulator = (1.0 - alpha) * dP;
                 dPmanipulator_local = Tarm_uav_ * Tuav_origin_world_ * dPmanipulator;
-            }
+            }*/
+            dPuav = dP;
 
             uav_command_pose_.header.stamp = this->getTime();
             uav_command_pose_.header.frame_id = "uav";
@@ -426,32 +428,37 @@ class AerialManipulatorControl {
             }   
         };
 
-        void trajectoryRefCb(const trajectory_msgs::MultiDOFJointTrajectory &msg) {
-            /*if (msg.points.size() > 0)
+        void trajectoryRefCb(const trajectory_msgs::JointTrajectoryPoint &msg) {
+            if (msg.positions.size() > 0)
             {
-                pose_ref_.header = msg.header;
-                pose_ref_.pose.position.x = msg.points[0].transforms[0].translation.x;
-                pose_ref_.pose.position.y = msg.points[0].transforms[0].translation.y;
-                pose_ref_.pose.position.z = msg.points[0].transforms[0].translation.z;
-                pose_ref_.pose.orientation.x = msg.points[0].transforms[0].rotation.x;
-                pose_ref_.pose.orientation.y = msg.points[0].transforms[0].rotation.y;
-                pose_ref_.pose.orientation.z = msg.points[0].transforms[0].rotation.z;
-                pose_ref_.pose.orientation.w = msg.points[0].transforms[0].rotation.w;
+                pose_ref_.header.stamp = this->getTime();
+                pose_ref_.header.frame_id = "uav";
+                pose_ref_.pose.position.x = msg.positions[0];
+                pose_ref_.pose.position.y = msg.positions[1];
+                pose_ref_.pose.position.z = msg.positions[2];
+                pose_ref_.pose.orientation.x = 0;//msg.positions[3];
+                pose_ref_.pose.orientation.y = 0;//msg.positions[4];
+                pose_ref_.pose.orientation.z = 0;//msg.positions[5];
+                pose_ref_.pose.orientation.w = 1;//msg.positions[6];
 
-                vel_ref_.linear.x = msg.points[0].velocities[0].linear.x;
-                vel_ref_.linear.y = msg.points[0].velocities[0].linear.y;
-                vel_ref_.linear.z = msg.points[0].velocities[0].linear.z;
-                vel_ref_.angular.x = msg.points[0].velocities[0].angular.x;
-                vel_ref_.angular.y = msg.points[0].velocities[0].angular.y;
-                vel_ref_.angular.z = msg.points[0].velocities[0].angular.z;
+                vel_ref_.header.stamp = this->getTime();
+                vel_ref_.header.frame_id = "uav";
+                vel_ref_.twist.linear.x = msg.velocities[0];
+                vel_ref_.twist.linear.y = msg.velocities[1];
+                vel_ref_.twist.linear.z = msg.velocities[2];
+                //vel_ref_.angular.x = msg.velocities[];
+                //vel_ref_.angular.y = msg.velocities[0];
+                //vel_ref_.angular.z = msg.velocities[0];
 
-                acc_ref_.linear.x = msg.points[0].accelerations[0].linear.x;
-                acc_ref_.linear.y = msg.points[0].accelerations[0].linear.y;
-                acc_ref_.linear.z = msg.points[0].accelerations[0].linear.z;
-                acc_ref_.angular.x = msg.points[0].accelerations[0].angular.x;
-                acc_ref_.angular.y = msg.points[0].accelerations[0].angular.y;
-                acc_ref_.angular.z = msg.points[0].accelerations[0].angular.z;
-            }*/
+                acc_ref_.header.stamp = this->getTime();
+                acc_ref_.header.frame_id = "uav";
+                acc_ref_.twist.linear.x = msg.accelerations[0];
+                acc_ref_.twist.linear.y = msg.accelerations[1];
+                acc_ref_.twist.linear.z = msg.accelerations[2];
+                //acc_ref_.angular.x = msg.points[0].accelerations[0].angular.x;
+                //acc_ref_.angular.y = msg.points[0].accelerations[0].angular.y;
+                //acc_ref_.angular.z = msg.points[0].accelerations[0].angular.z;
+            }
         };
 
         void uavPoseMeasOdomCb(const nav_msgs::Odometry &msg) {
@@ -493,6 +500,10 @@ class AerialManipulatorControl {
             pose_ref_ = msg;
             vel_ref_ = geometry_msgs::TwistStamped();
             acc_ref_ = geometry_msgs::TwistStamped();
+        };
+
+        void uavPoseRefCb(const geometry_msgs::PoseStamped &msg) {
+
         };
 
         bool setHomePositionManipulatorCb(std_srvs::Empty::Request  &req, std_srvs::Empty::Response &res) {
@@ -599,6 +610,10 @@ class AerialManipulatorControl {
             return manipulator_pose_meas_;
         }
 
+        geometry_msgs::PoseStamped getAerialManipulatorPose() {
+            return pose_meas_;
+        }
+
         void clockCb(const rosgraph_msgs::Clock &msg) {
             clock_ = msg;
         };
@@ -671,9 +686,6 @@ class AerialManipulatorControl {
             aerial_manipulator_command_pose_[0].pose.orientation.y = qyc_[0];
             aerial_manipulator_command_pose_[0].pose.orientation.z = qzc_[0];
             aerial_manipulator_command_pose_[0].pose.orientation.w = qwc_[0];
-
-            //std::cout<<manipulator_control_.getJacobian().completeOrthogonalDecomposition().pseudoInverse()<<std::endl;
-            //std::cout<<std::endl;
 
             this->aerial_manipulator_inverse_kinematics(0.2);
         };
@@ -823,6 +835,7 @@ int main(int argc, char **argv)
     geometry_msgs::PoseStamped commanded_uav_position_msg;
     geometry_msgs::PoseStamped commanded_aerial_manipulator_position_msg;
     geometry_msgs::PoseStamped end_effector_pose, commanded_manipulator_position_msg;
+    geometry_msgs::PoseStamped aerial_manipulator_pose;
 
     transformation_msg.data.resize(16);
 
@@ -835,11 +848,9 @@ int main(int argc, char **argv)
 
     private_node_handle_.param("rate", rate, int(100));
     private_node_handle_.param("simulation", simulation_flag, bool(true));
-    private_node_handle_.param("robot_name", robot_model_name, std::string("wp_manipulator"));
     private_node_handle_.param("joint_group_name", joint_group_name, std::string("wp_manipulator_arm"));
     private_node_handle_.param("parameters_file", parameters_file, std::string("/config/aerial_manipulator_parameters.yaml"));
-    private_node_handle_.param("robot_name", robot_model_name, std::string("wp_manipulator"));
-    private_node_handle_.param("joint_group_name", joint_group_name, std::string("wp_manipulator_arm"));
+    private_node_handle_.param("maniupulator_name", robot_model_name, std::string("wp_manipulator"));
 
     ros::Rate loop_rate(rate);
 
@@ -847,21 +858,23 @@ int main(int argc, char **argv)
     aerial_manipulator_control.initManipulatorControl(&n, robot_model_name, joint_group_name, path+parameters_file);
 
     ros::Subscriber clock_ros_sub = n.subscribe("/clock", 1, &AerialManipulatorControl::clockCb, &aerial_manipulator_control);
-    ros::Subscriber uav_pose_meas_odometry_sub = n.subscribe("aerial_manipulator_control/uav_odometry_meas_input", 1, &AerialManipulatorControl::uavPoseMeasOdomCb, &aerial_manipulator_control);
-    ros::Subscriber pose_ref_sub = n.subscribe("aerial_manipulator_control/pose_stamped_ref_input", 1, &AerialManipulatorControl::poseRefCb, &aerial_manipulator_control);  
+    ros::Subscriber uav_pose_meas_odometry_sub = n.subscribe("aerial_manipulator_control/uav/odometry_meas_input", 1, &AerialManipulatorControl::uavPoseMeasOdomCb, &aerial_manipulator_control);
+    ros::Subscriber pose_ref_sub = n.subscribe("aerial_manipulator_control/pose_stamped_ref_input", 1, &AerialManipulatorControl::poseRefCb, &aerial_manipulator_control);
+    ros::Subscriber uav_pose_ref_sub = n.subscribe("aerial_manipulator_control/uav/pose_stamped_ref_input", 1, &AerialManipulatorControl::uavPoseRefCb, &aerial_manipulator_control);  
     ros::Subscriber force_torque_ref_ros_sub = n.subscribe("aerial_manipulator_control/force_torque_ref_input", 1, &AerialManipulatorControl::forceTorqueRefCb, &aerial_manipulator_control);
     ros::Subscriber force_ros_sub = n.subscribe("aerial_manipulator_control/force_torque_meas_input", 1, &AerialManipulatorControl::forceMeasurementCb, &aerial_manipulator_control);
     ros::Subscriber aerial_manipulator_trajectory_ref_ros_sub = n.subscribe("aerial_manipulator_control/trajectory_ref_input", 1, &AerialManipulatorControl::trajectoryRefCb, &aerial_manipulator_control);
-    ros::Subscriber znj = n.subscribe("aerial_manipulator_control/end_effector/pose_ref", 1, &AerialManipulatorControl::end_effector_cb, &aerial_manipulator_control);
+    ros::Subscriber manipulator_q_ref_sub = n.subscribe("aerial_manipulator_control/end_effector/q_ref", 1, &AerialManipulatorControl::end_effector_cb, &aerial_manipulator_control);
 
 
     ros::Publisher transformation_pub_ = n.advertise<std_msgs::Float64MultiArray>("aerial_manipulator_control/transformation/world_end_effector", 1);
     ros::Publisher state_pub_ = n.advertise<std_msgs::Float64MultiArray>("aerial_manipulator_control/state", 1);
-    ros::Publisher uav_pose_stamped_commanded_pub_ = n.advertise<geometry_msgs::PoseStamped>("aerial_manipulator_control/uav/pose_stamped_output", 1);
-    ros::Publisher uav_pose_commanded_pub_ = n.advertise<geometry_msgs::Pose>("aerial_manipulator_control/uav/pose_output", 1);
-    ros::Publisher aerial_manipulator_pose_commanded_pub_ = n.advertise<geometry_msgs::PoseStamped>("aerial_manipulator_control/pose_stamped_output", 1);
-    ros::Publisher manipulator_pose_stamped_commanded_pub_ = n.advertise<geometry_msgs::PoseStamped>("aerial_manipulator_control/end_effector/pose_stamped_output", 1);
-    ros::Publisher manipulator_position_local_pub_ros_ = n.advertise<geometry_msgs::PoseStamped>("aerial_manipulator_control/end_effector/pose_local", 1);
+    ros::Publisher uav_pose_stamped_commanded_pub_ = n.advertise<geometry_msgs::PoseStamped>("aerial_manipulator_control/uav/pose_stamped_ref_output", 1);
+    ros::Publisher uav_pose_commanded_pub_ = n.advertise<geometry_msgs::Pose>("aerial_manipulator_control/uav/pose_ref_output", 1);
+    ros::Publisher aerial_manipulator_pose_commanded_pub_ = n.advertise<geometry_msgs::PoseStamped>("aerial_manipulator_control/pose_stamped_ref_output", 1);
+    ros::Publisher manipulator_pose_stamped_commanded_pub_ = n.advertise<geometry_msgs::PoseStamped>("aerial_manipulator_control/end_effector/pose_stamped_ref_output", 1);
+    ros::Publisher manipulator_position_pub_ros_ = n.advertise<geometry_msgs::PoseStamped>("aerial_manipulator_control/end_effector/pose_output", 1);
+    ros::Publisher aerial_manipulator_pose_pub_ros_ = n.advertise<geometry_msgs::PoseStamped>("aerial_manipulator_control/pose_output", 1);
 
     ros::ServiceServer start_control_ros_srv = n.advertiseService("aerial_manipulator_control/start", &AerialManipulatorControl::startControlCb, &aerial_manipulator_control);
     ros::ServiceServer set_manipulator_home_ros_srv = n.advertiseService("aerial_manipulator_control/manipulator/home", &AerialManipulatorControl::setHomePositionManipulatorCb, &aerial_manipulator_control);
@@ -900,6 +913,7 @@ int main(int argc, char **argv)
             aerial_manipulator_control.calculateEndEffectorPosition();
             aerial_manipulator_control.getEndEffectorTransformationMatrix(Tworld_end_effector);
             end_effector_pose = aerial_manipulator_control.getEndEffectorPositionLocal();
+            aerial_manipulator_pose = aerial_manipulator_control.getAerialManipulatorPose();
 
             for (int i = 0; i < 4; i++) {
                 for (int j = 0; j < 4; j++) {
@@ -927,10 +941,10 @@ int main(int argc, char **argv)
                 state_pub_.publish(state_msg);
             }
 
-            manipulator_position_local_pub_ros_.publish(end_effector_pose);
+            manipulator_position_pub_ros_.publish(end_effector_pose);
+            aerial_manipulator_pose_pub_ros_.publish(aerial_manipulator_pose);
+            transformation_pub_.publish(transformation_msg);
         }
-
-        transformation_pub_.publish(transformation_msg);
 
         loop_rate.sleep();
     }

@@ -350,13 +350,15 @@ void ManipulatorControl::publishJointSetpoints(std::vector<double> q) {
 	(*kinematic_state_)->copyJointGroupPositions(joint_model_group_name_, q);
 
 	for (int i = 0; i < q.size(); i++) {
+		std_msgs::Float64 float_msg;
 		joint_setpoints.joint_names.push_back(joint_names[i]);
 		joint_setpoint.positions.push_back(q_directions_[i] * q[i]);
 		joint_setpoint.velocities.push_back(0.0);
 		joint_setpoint.accelerations.push_back(0.0);
 		joint_setpoint.effort.push_back(0.0);
 
-		manipulator_q_set_point_pub_ros_[i].publish(q_directions_[i] * q[i]);
+		float_msg.data = q_directions_[i] * q[i];
+		manipulator_q_set_point_pub_ros_[i].publish(float_msg);
 	}
 
 	joint_setpoint.time_from_start = ros::Duration(1);
