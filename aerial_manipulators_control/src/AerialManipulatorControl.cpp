@@ -511,9 +511,9 @@ class AerialManipulatorControl {
                 euler2quaternion(orientationEuler, orientationQuaternion);
                 pose_ref_.header.stamp = this->getTime();
                 pose_ref_.header.frame_id = "aerial_manipulator";
-                pose_ref_.pose.position.x = Tworld_end_effector_(0,3);
-                pose_ref_.pose.position.y = Tworld_end_effector_(1,3);
-                pose_ref_.pose.position.z = Tworld_end_effector_(2,3);
+                pose_ref_.pose.position.x = Tworld_end_effector_ref(0,3);
+                pose_ref_.pose.position.y = Tworld_end_effector_ref(1,3);
+                pose_ref_.pose.position.z = Tworld_end_effector_ref(2,3);
                 pose_ref_.pose.orientation.x = orientationQuaternion[1];
                 pose_ref_.pose.orientation.y = orientationQuaternion[2];
                 pose_ref_.pose.orientation.z = orientationQuaternion[3];
