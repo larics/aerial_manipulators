@@ -172,7 +172,7 @@ class AerialManipulatorControl {
             Tend_effector_arm_ = Tarm_end_effector_.inverse();
         };
 
-        void aerial_manipulator_inverse_kinematics(double step_size) {
+        void aerial_manipulator_inverse_kinematics() {
             double alpha = 0.0;
             double q_norm = 0.0;
             bool ik_found = false;
@@ -203,7 +203,7 @@ class AerialManipulatorControl {
             //manipulator_command_pose.orientation.z = manipulator_command_pose_.pose.orientation.z;
             //manipulator_command_pose.orientation.w = manipulator_command_pose_.pose.orientation.w;
 
-            q_manipulator_setpoint_ = manipulator_q_home_;//manipulator_control_.calculateJointSetpoints(manipulator_command_pose, ik_found, 10, 0.01);
+            //q_manipulator_setpoint_ = manipulator_q_home_;//manipulator_control_.calculateJointSetpoints(manipulator_command_pose, ik_found, 10, 0.01);
 
             /*for (int i = 0; i < manipulator_q_home_.size(); i++) {
                 q_norm += pow(q_manipulator_setpoint[i] - manipulator_q_home_[i], 2);
@@ -223,6 +223,7 @@ class AerialManipulatorControl {
                 dPmanipulator = (1.0 - alpha) * dP;
                 dPmanipulator_local = Tarm_uav_ * Tuav_origin_world_ * dPmanipulator;
             }*/
+            q_manipulator_setpoint_ = q_manipulator_ref_;
             dPuav = dP;
 
             uav_command_pose_.header.stamp = this->getTime();
@@ -237,9 +238,9 @@ class AerialManipulatorControl {
 
             manipulator_command_pose_.header.stamp = this->getTime();
             manipulator_command_pose_.header.frame_id = "manipulator";
-            manipulator_command_pose_.pose.position.x = manipulator_command_pose_.pose.position.x + dPmanipulator_local(0);
-            manipulator_command_pose_.pose.position.y = manipulator_command_pose_.pose.position.y + dPmanipulator_local(1);
-            manipulator_command_pose_.pose.position.z = manipulator_command_pose_.pose.position.z + dPmanipulator_local(2);
+            manipulator_command_pose_.pose.position.x = manipulator_command_pose_.pose.position.x;
+            manipulator_command_pose_.pose.position.y = manipulator_command_pose_.pose.position.y;
+            manipulator_command_pose_.pose.position.z = manipulator_command_pose_.pose.position.z;
             manipulator_command_pose_.pose.orientation.x = manipulator_command_pose_.pose.orientation.x;
             manipulator_command_pose_.pose.orientation.y = manipulator_command_pose_.pose.orientation.y;
             manipulator_command_pose_.pose.orientation.z = manipulator_command_pose_.pose.orientation.z;
@@ -314,9 +315,8 @@ class AerialManipulatorControl {
         double xq_, yq_, zq_, lambda_manipulator_, lambda_uav_;
 
         geometry_msgs::PoseStamped uav_pose_meas_, manipulator_pose_meas_, uav_command_pose_, manipulator_command_pose_;
-        geometry_msgs::PoseStamped pose_ref_, pose_meas_, aerial_manipulator_command_pose_[2];
-        geometry_msgs::Pose manipulator_home_pose_, uav_home_pose_;
-        geometry_msgs::TwistStamped vel_ref_, acc_ref_;
+        geometry_msgs::PoseStamped uav_pose_ref_, pose_ref_, pose_meas_, aerial_manipulator_command_pose_[2];
+        geometry_msgs::TwistStamped vel_ref_, acc_ref_, uav_vel_ref_, uav_acc_ref_;
         geometry_msgs::WrenchStamped force_meas_, force_torque_ref_;
 
         Eigen::Matrix4d Tuav_arm_, Tworld_uav_origin_, Tuav_origin_world_, Tarm_uav_;
@@ -324,7 +324,7 @@ class AerialManipulatorControl {
         Eigen::Matrix4d Tworld_end_effector_, Tend_effector_world_;
 
         std::vector<double> kp1_, kp2_, wp_, wd_, M_, B_, K_, dead_zone_, kp0_;
-        std::vector<double> q_manipulator_setpoint_;
+        std::vector<double> q_manipulator_setpoint_, q_manipulator_ref_;
         std::vector<double> manipulator_q_home_;
 
         rosgraph_msgs::Clock clock_;
@@ -383,6 +383,7 @@ class AerialManipulatorControl {
             number_of_joints_ = manipulator_control_.getNumberOfJoints();
 
             q_manipulator_setpoint_ = std::vector<double>(number_of_joints_, 0);
+            q_manipulator_ref_ = std::vector<double>(number_of_joints_, 0);
         };
 
         void reconfigureCb(aerial_manipulators_control::ImpedanceControlConfig &config, uint32_t level) {
@@ -429,35 +430,94 @@ class AerialManipulatorControl {
         };
 
         void trajectoryRefCb(const trajectory_msgs::JointTrajectoryPoint &msg) {
+            float orientationQuaternion[4], orientationEuler[3];
+            float manipulator_position[3], manipulator_orientation_euler[3], manipulator_orientation_q[4];
+            float uav_position[3], uav_orientation_euler[3], uav_orientation_q[4];
+            geometry_msgs::PoseStamped manipulator_position_ref;
+            Eigen::Matrix4d Tarm_end_effector_ref, Tend_effector_arm_ref;
+            Eigen::Matrix4d Tuav_origin_world_ref, Tworld_uav_origin_ref;
+            Eigen::Matrix4d Tend_effector_world_ref, Tworld_end_effector_ref;
+
             if (msg.positions.size() > 0)
             {
+                uav_pose_ref_.header.stamp = this->getTime();
+                uav_pose_ref_.header.frame_id = "uav";
+                uav_pose_ref_.pose.position.x = msg.positions[0];
+                uav_pose_ref_.pose.position.y = msg.positions[1];
+                uav_pose_ref_.pose.position.z = msg.positions[2];
+                orientationEuler[0] = 0.0;//msg.positions[3];
+                orientationEuler[1] = 0.0;//msg.positions[4];
+                orientationEuler[2] = msg.positions[5];
+
+                euler2quaternion(orientationEuler, orientationQuaternion);
+
+                uav_pose_ref_.pose.orientation.x = orientationQuaternion[1];
+                uav_pose_ref_.pose.orientation.y = orientationQuaternion[2];
+                uav_pose_ref_.pose.orientation.z = orientationQuaternion[3];
+                uav_pose_ref_.pose.orientation.w = orientationQuaternion[0];
+
+                uav_vel_ref_.header.stamp = this->getTime();
+                uav_vel_ref_.header.frame_id = "uav";
+                uav_vel_ref_.twist.linear.x = msg.velocities[0];
+                uav_vel_ref_.twist.linear.y = msg.velocities[1];
+                uav_vel_ref_.twist.linear.z = msg.velocities[2];
+                uav_vel_ref_.twist.angular.x = 0.0;//msg.velocities[3];
+                uav_vel_ref_.twist.angular.y = 0.0;//msg.velocities[4];
+                uav_vel_ref_.twist.angular.z = msg.velocities[5];
+
+                uav_acc_ref_.header.stamp = this->getTime();
+                uav_acc_ref_.header.frame_id = "uav";
+                uav_acc_ref_.twist.linear.x = msg.accelerations[0];
+                uav_acc_ref_.twist.linear.y = msg.accelerations[1];
+                uav_acc_ref_.twist.linear.z = msg.accelerations[2];
+                uav_acc_ref_.twist.angular.x = 0.0;//msg.accelerations[3];
+                uav_acc_ref_.twist.angular.y = 0.0;//msg.accelerations[4];
+                uav_acc_ref_.twist.angular.z = msg.accelerations[5];
+
+                for (int i = 0; i < number_of_joints_; i++)
+                {
+                    q_manipulator_ref_[i] = msg.positions[i+6];
+                }
+
+                //TODO pretvoriti to u vrh alata
+                manipulator_position_ref = manipulator_control_.getEndEffectorPositionFromQ(q_manipulator_ref_);
+                manipulator_position[0] = manipulator_position_ref.pose.position.x;
+                manipulator_position[1] = manipulator_position_ref.pose.position.y;
+                manipulator_position[2] = manipulator_position_ref.pose.position.z;
+                manipulator_orientation_q[0] = manipulator_position_ref.pose.orientation.w;
+                manipulator_orientation_q[1] = manipulator_position_ref.pose.orientation.x;
+                manipulator_orientation_q[2] = manipulator_position_ref.pose.orientation.y;
+                manipulator_orientation_q[3] = manipulator_position_ref.pose.orientation.z;
+                quaternion2euler(manipulator_orientation_q, manipulator_orientation_euler);
+                getRotationTranslationMatrix(Tarm_end_effector_ref, manipulator_orientation_euler, manipulator_position);
+                Tend_effector_arm_ref = Tarm_end_effector_ref.inverse();
+
+
+                uav_position[0] = uav_pose_ref_.pose.position.x;
+                uav_position[1] = uav_pose_ref_.pose.position.y;
+                uav_position[2] = uav_pose_ref_.pose.position.z;
+                uav_orientation_q[0] = uav_pose_ref_.pose.orientation.w;
+                uav_orientation_q[1] = uav_pose_ref_.pose.orientation.x;
+                uav_orientation_q[2] = uav_pose_ref_.pose.orientation.y;
+                uav_orientation_q[3] = uav_pose_ref_.pose.orientation.z;
+                quaternion2euler(uav_orientation_q, uav_orientation_euler);
+                getRotationTranslationMatrix(Tworld_uav_origin_ref, uav_orientation_euler, uav_position);
+                Tuav_origin_world_ref = Tworld_uav_origin_ref.inverse();
+
+
+                Tworld_end_effector_ref = Tworld_uav_origin_ref * Tuav_arm_ * Tarm_end_effector_ref;
+                Tend_effector_world_ref = Tworld_end_effector_ref.inverse();
+                getAnglesFromRotationTranslationMatrix(Tworld_end_effector_ref, orientationEuler);
+                euler2quaternion(orientationEuler, orientationQuaternion);
                 pose_ref_.header.stamp = this->getTime();
-                pose_ref_.header.frame_id = "uav";
-                pose_ref_.pose.position.x = msg.positions[0];
-                pose_ref_.pose.position.y = msg.positions[1];
-                pose_ref_.pose.position.z = msg.positions[2];
-                pose_ref_.pose.orientation.x = 0;//msg.positions[3];
-                pose_ref_.pose.orientation.y = 0;//msg.positions[4];
-                pose_ref_.pose.orientation.z = 0;//msg.positions[5];
-                pose_ref_.pose.orientation.w = 1;//msg.positions[6];
-
-                vel_ref_.header.stamp = this->getTime();
-                vel_ref_.header.frame_id = "uav";
-                vel_ref_.twist.linear.x = msg.velocities[0];
-                vel_ref_.twist.linear.y = msg.velocities[1];
-                vel_ref_.twist.linear.z = msg.velocities[2];
-                //vel_ref_.angular.x = msg.velocities[];
-                //vel_ref_.angular.y = msg.velocities[0];
-                //vel_ref_.angular.z = msg.velocities[0];
-
-                acc_ref_.header.stamp = this->getTime();
-                acc_ref_.header.frame_id = "uav";
-                acc_ref_.twist.linear.x = msg.accelerations[0];
-                acc_ref_.twist.linear.y = msg.accelerations[1];
-                acc_ref_.twist.linear.z = msg.accelerations[2];
-                //acc_ref_.angular.x = msg.points[0].accelerations[0].angular.x;
-                //acc_ref_.angular.y = msg.points[0].accelerations[0].angular.y;
-                //acc_ref_.angular.z = msg.points[0].accelerations[0].angular.z;
+                pose_ref_.header.frame_id = "aerial_manipulator";
+                pose_ref_.pose.position.x = Tworld_end_effector_(0,3);
+                pose_ref_.pose.position.y = Tworld_end_effector_(1,3);
+                pose_ref_.pose.position.z = Tworld_end_effector_(2,3);
+                pose_ref_.pose.orientation.x = orientationQuaternion[1];
+                pose_ref_.pose.orientation.y = orientationQuaternion[2];
+                pose_ref_.pose.orientation.z = orientationQuaternion[3];
+                pose_ref_.pose.orientation.w = orientationQuaternion[0];
             }
         };
 
@@ -507,6 +567,7 @@ class AerialManipulatorControl {
         };
 
         bool setHomePositionManipulatorCb(std_srvs::Empty::Request  &req, std_srvs::Empty::Response &res) {
+            q_manipulator_ref_ = manipulator_q_home_;
             q_manipulator_setpoint_ = manipulator_q_home_;
             this->publishManipulatorSetpoints();
             return true;
@@ -522,6 +583,8 @@ class AerialManipulatorControl {
                 initial_values[1] = pose_meas_.pose.position.y;
                 initial_values[2] = pose_meas_.pose.position.z;
 
+                pose_ref_.header.stamp = this->getTime();
+                pose_ref_.header.frame_id = "aerial_manipulator";
                 pose_ref_.pose.position.x = initial_values[0];
                 pose_ref_.pose.position.y = initial_values[1];
                 pose_ref_.pose.position.z = initial_values[2];
@@ -530,14 +593,17 @@ class AerialManipulatorControl {
                 pose_ref_.pose.orientation.z = pose_meas_.pose.orientation.z;
                 pose_ref_.pose.orientation.w = pose_meas_.pose.orientation.w;
 
+                uav_pose_ref_ = uav_pose_meas_;
+
                 aerial_manipulator_command_pose_[0] = pose_ref_;
                 aerial_manipulator_command_pose_[1] = pose_ref_;
                 uav_command_pose_ = uav_pose_meas_;
                 manipulator_command_pose_ = manipulator_pose_meas_;
                 q_manipulator_setpoint_ = manipulator_control_.getJointMeasurements();
-                manipulator_home_pose_ = manipulator_control_.getEndEffectorPositionFromQ(manipulator_q_home_).pose;
-                uav_home_pose_ = uav_command_pose_.pose;
+                q_manipulator_ref_ = manipulator_control_.getJointMeasurements();
 
+                vel_ref_.header.stamp = this->getTime();
+                vel_ref_.header.frame_id = "aerial_manipulator";
                 vel_ref_.twist.linear.x = 0;
                 vel_ref_.twist.linear.y = 0;
                 vel_ref_.twist.linear.z = 0;
@@ -545,12 +611,32 @@ class AerialManipulatorControl {
                 vel_ref_.twist.angular.y = 0;
                 vel_ref_.twist.angular.z = 0;
 
+                acc_ref_.header.stamp = this->getTime();
+                acc_ref_.header.frame_id = "aerial_manipulator";
                 acc_ref_.twist.linear.x = 0;
                 acc_ref_.twist.linear.y = 0;
                 acc_ref_.twist.linear.z = 0;
                 acc_ref_.twist.angular.x = 0;
                 acc_ref_.twist.angular.y = 0;
                 acc_ref_.twist.angular.z = 0;
+
+                uav_vel_ref_.header.stamp = this->getTime();
+                uav_vel_ref_.header.frame_id = "uav";
+                uav_vel_ref_.twist.linear.x = 0;
+                uav_vel_ref_.twist.linear.y = 0;
+                uav_vel_ref_.twist.linear.z = 0;
+                uav_vel_ref_.twist.angular.x = 0;
+                uav_vel_ref_.twist.angular.y = 0;
+                uav_vel_ref_.twist.angular.z = 0;
+
+                uav_acc_ref_.header.stamp = this->getTime();
+                uav_acc_ref_.header.frame_id = "uav";
+                uav_acc_ref_.twist.linear.x = 0;
+                uav_acc_ref_.twist.linear.y = 0;
+                uav_acc_ref_.twist.linear.z = 0;
+                uav_acc_ref_.twist.angular.x = 0;
+                uav_acc_ref_.twist.angular.y = 0;
+                uav_acc_ref_.twist.angular.z = 0;
 
                 ROS_INFO("Starting aerial manipulator control.");
                 initializeImpedanceFilterTransferFunction();
@@ -582,7 +668,7 @@ class AerialManipulatorControl {
         };
 
         void calculateEndEffectorPosition() {
-            float orientationEuler[3], orientationQuaternion[3];
+            float orientationEuler[3], orientationQuaternion[4];
 
             this->fetchLocalEndEffectorPosition();
             Tworld_end_effector_ = Tworld_uav_origin_ * Tuav_arm_ * Tarm_end_effector_;
@@ -687,7 +773,7 @@ class AerialManipulatorControl {
             aerial_manipulator_command_pose_[0].pose.orientation.z = qzc_[0];
             aerial_manipulator_command_pose_[0].pose.orientation.w = qwc_[0];
 
-            this->aerial_manipulator_inverse_kinematics(0.2);
+            this->aerial_manipulator_inverse_kinematics();
         };
 
 
