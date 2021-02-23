@@ -177,15 +177,52 @@ class AerialManipulatorControl {
             double q_norm = 0.0;
             bool ik_found = false;
             geometry_msgs::Pose manipulator_command_pose, uav_command_pose;
+            geometry_msgs::PoseStamped manipulator_position_ref;
             Eigen::Vector4d dPuav, dPmanipulator, dPmanipulator_local;
             Eigen::VectorXd dP(4);
             Eigen::MatrixXd J_manipulator, J_uav(6, 3);
+            Eigen::Matrix4d Tarm_end_effector_ref, Tend_effector_arm_ref;
+            Eigen::Matrix4d Tworld_end_effector_ref, Tend_effector_world_ref;
+            Eigen::Matrix4d Tworld_uav_origin_ref;
             std::vector<double> q_manipulator_setpoint;
+            float manipulator_position[3], manipulator_orientation_euler[3], manipulator_orientation_q[4];
+            float aerial_manipulator_position[3], aerial_manipulator_orientation_q[4], aerial_manipulator_orientation_euler[3];
+            float orientationEuler[3], orientationQuaternion[4];
 
             dP(0) = aerial_manipulator_command_pose_[0].pose.position.x - aerial_manipulator_command_pose_[1].pose.position.x;
             dP(1) = aerial_manipulator_command_pose_[0].pose.position.y - aerial_manipulator_command_pose_[1].pose.position.y;
             dP(2) = aerial_manipulator_command_pose_[0].pose.position.z - aerial_manipulator_command_pose_[1].pose.position.z;
             dP(3) = 0.0;
+
+            //pozicija iz impedancije u transformacijsku matricu
+            aerial_manipulator_position[0] = aerial_manipulator_command_pose_[0].pose.position.x;
+            aerial_manipulator_position[1] = aerial_manipulator_command_pose_[0].pose.position.y;
+            aerial_manipulator_position[2] = aerial_manipulator_command_pose_[0].pose.position.z;
+            aerial_manipulator_orientation_q[0] = aerial_manipulator_command_pose_[0].pose.orientation.w;
+            aerial_manipulator_orientation_q[1] = aerial_manipulator_command_pose_[0].pose.orientation.x;
+            aerial_manipulator_orientation_q[2] = aerial_manipulator_command_pose_[0].pose.orientation.y;
+            aerial_manipulator_orientation_q[3] = aerial_manipulator_command_pose_[0].pose.orientation.z;
+            quaternion2euler(aerial_manipulator_orientation_q, aerial_manipulator_orientation_euler);
+            getRotationTranslationMatrix(Tworld_end_effector_ref, aerial_manipulator_orientation_euler, aerial_manipulator_position);
+            Tend_effector_world_ref = Tworld_end_effector_ref.inverse();
+
+            //direktna za manipulator
+            manipulator_position_ref = manipulator_control_.getEndEffectorPositionFromQ(q_manipulator_ref_);
+            manipulator_position[0] = manipulator_position_ref.pose.position.x;
+            manipulator_position[1] = manipulator_position_ref.pose.position.y;
+            manipulator_position[2] = manipulator_position_ref.pose.position.z;
+            manipulator_orientation_q[0] = manipulator_position_ref.pose.orientation.w;
+            manipulator_orientation_q[1] = manipulator_position_ref.pose.orientation.x;
+            manipulator_orientation_q[2] = manipulator_position_ref.pose.orientation.y;
+            manipulator_orientation_q[3] = manipulator_position_ref.pose.orientation.z;
+            quaternion2euler(manipulator_orientation_q, manipulator_orientation_euler);
+            getRotationTranslationMatrix(Tarm_end_effector_ref, manipulator_orientation_euler, manipulator_position);
+            Tend_effector_arm_ref = Tarm_end_effector_ref.inverse();
+
+
+            Tworld_uav_origin_ref = Tworld_end_effector_ref * Tend_effector_arm_ref * Tarm_uav_;
+            getAnglesFromRotationTranslationMatrix(Tworld_uav_origin_ref, orientationEuler);
+            euler2quaternion(orientationEuler, orientationQuaternion);
 
             //calculate norm distance 
             //q_manipulator_meas = manipulator_control_.getJointMeasurements();
@@ -224,27 +261,28 @@ class AerialManipulatorControl {
                 dPmanipulator_local = Tarm_uav_ * Tuav_origin_world_ * dPmanipulator;
             }*/
             q_manipulator_setpoint_ = q_manipulator_ref_;
-            dPuav = dP;
 
             uav_command_pose_.header.stamp = this->getTime();
             uav_command_pose_.header.frame_id = "uav";
-            uav_command_pose_.pose.position.x = uav_command_pose_.pose.position.x + dPuav(0);
-            uav_command_pose_.pose.position.y = uav_command_pose_.pose.position.y + dPuav(1);
-            uav_command_pose_.pose.position.z = uav_command_pose_.pose.position.z + dPuav(2);
-            uav_command_pose_.pose.orientation.x = aerial_manipulator_command_pose_[0].pose.orientation.x;
-            uav_command_pose_.pose.orientation.y = aerial_manipulator_command_pose_[0].pose.orientation.y;
-            uav_command_pose_.pose.orientation.z = aerial_manipulator_command_pose_[0].pose.orientation.z;
-            uav_command_pose_.pose.orientation.w = aerial_manipulator_command_pose_[0].pose.orientation.w;
+            uav_command_pose_.pose.position.x = Tworld_uav_origin_ref(0,3);
+            uav_command_pose_.pose.position.y = Tworld_uav_origin_ref(1,3);
+            uav_command_pose_.pose.position.z = Tworld_uav_origin_ref(2,3);
+            uav_command_pose_.pose.orientation.x = orientationQuaternion[1];//aerial_manipulator_command_pose_[0].pose.orientation.x;
+            uav_command_pose_.pose.orientation.y = orientationQuaternion[2];//aerial_manipulator_command_pose_[0].pose.orientation.y;
+            uav_command_pose_.pose.orientation.z = orientationQuaternion[3];//aerial_manipulator_command_pose_[0].pose.orientation.z;
+            uav_command_pose_.pose.orientation.w = orientationQuaternion[0];//aerial_manipulator_command_pose_[0].pose.orientation.w;
 
             manipulator_command_pose_.header.stamp = this->getTime();
             manipulator_command_pose_.header.frame_id = "manipulator";
-            manipulator_command_pose_.pose.position.x = manipulator_command_pose_.pose.position.x;
-            manipulator_command_pose_.pose.position.y = manipulator_command_pose_.pose.position.y;
-            manipulator_command_pose_.pose.position.z = manipulator_command_pose_.pose.position.z;
-            manipulator_command_pose_.pose.orientation.x = manipulator_command_pose_.pose.orientation.x;
-            manipulator_command_pose_.pose.orientation.y = manipulator_command_pose_.pose.orientation.y;
-            manipulator_command_pose_.pose.orientation.z = manipulator_command_pose_.pose.orientation.z;
-            manipulator_command_pose_.pose.orientation.w = manipulator_command_pose_.pose.orientation.w;
+            manipulator_command_pose_.pose.position.x = manipulator_position_ref.pose.position.x;
+            manipulator_command_pose_.pose.position.y = manipulator_position_ref.pose.position.y;
+            manipulator_command_pose_.pose.position.z = manipulator_position_ref.pose.position.z;
+            manipulator_command_pose_.pose.orientation.x = manipulator_position_ref.pose.orientation.x;
+            manipulator_command_pose_.pose.orientation.y = manipulator_position_ref.pose.orientation.y;
+            manipulator_command_pose_.pose.orientation.z = manipulator_position_ref.pose.orientation.z;
+            manipulator_command_pose_.pose.orientation.w = manipulator_position_ref.pose.orientation.w;
+
+
 
         }
 
