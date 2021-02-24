@@ -351,6 +351,7 @@ class AerialManipulatorControl {
         double *xr_, *xc_, *yr_, *yc_, *zr_, *zc_, *xKp_, *yKp_, *zKp_;
         double qxc_[3], qyc_[3], qzc_[3], qwc_[3];
         double xq_, yq_, zq_, lambda_manipulator_, lambda_uav_;
+        double beta_;
 
         geometry_msgs::PoseStamped uav_pose_meas_, manipulator_pose_meas_, uav_command_pose_, manipulator_command_pose_;
         geometry_msgs::PoseStamped uav_pose_ref_, pose_ref_, pose_meas_, aerial_manipulator_command_pose_[2];
@@ -392,7 +393,8 @@ class AerialManipulatorControl {
             xq_(0.0),
             yq_(0.0),
             zq_(0.0),
-            reconfigure_start_(false) {
+            reconfigure_start_(false),
+            beta_(1.0) {
 
             Tuav_arm_ <<  1,  0,  0,  0,
                           0,  1,  0,  0,
@@ -476,7 +478,7 @@ class AerialManipulatorControl {
             Eigen::Matrix4d Tuav_origin_world_ref, Tworld_uav_origin_ref;
             Eigen::Matrix4d Tend_effector_world_ref, Tworld_end_effector_ref;
 
-            if (msg.positions.size() > 0)
+            if (msg.positions.size() > 0 && msg.positions.size() < (number_of_joints_+ 13))
             {
                 uav_pose_ref_.header.stamp = this->getTime();
                 uav_pose_ref_.header.frame_id = "uav";
@@ -516,6 +518,18 @@ class AerialManipulatorControl {
                 {
                     q_manipulator_ref_[i] = msg.positions[i+6];
                 }
+
+                force_torque_ref_.header.stamp = this->getTime();
+                force_torque_ref_.header.frame_id = "aerial_manipulator";
+                force_torque_ref_.wrench.force.x = msg.positions[number_of_joints_+ 6];
+                force_torque_ref_.wrench.force.y = msg.positions[number_of_joints_+ 7];
+                force_torque_ref_.wrench.force.z = msg.positions[number_of_joints_+ 8];
+                force_torque_ref_.wrench.torque.x = msg.positions[number_of_joints_+ 9];
+                force_torque_ref_.wrench.torque.y = msg.positions[number_of_joints_+ 10];
+                force_torque_ref_.wrench.torque.z = msg.positions[number_of_joints_+ 11];
+
+                beta_ = msg.positions[number_of_joints_+ 12];
+
 
                 //TODO pretvoriti to u vrh alata
                 manipulator_position_ref = manipulator_control_.getEndEffectorPositionFromQ(q_manipulator_ref_);
