@@ -477,8 +477,7 @@ class AerialManipulatorControl {
             Eigen::Matrix4d Tarm_end_effector_ref, Tend_effector_arm_ref;
             Eigen::Matrix4d Tuav_origin_world_ref, Tworld_uav_origin_ref;
             Eigen::Matrix4d Tend_effector_world_ref, Tworld_end_effector_ref;
-
-            if (msg.positions.size() > 0 && msg.positions.size() < (number_of_joints_+ 13))
+            if (msg.positions.size() > 0 && msg.positions.size() <= (number_of_joints_+ 13))
             {
                 uav_pose_ref_.header.stamp = this->getTime();
                 uav_pose_ref_.header.frame_id = "uav";
