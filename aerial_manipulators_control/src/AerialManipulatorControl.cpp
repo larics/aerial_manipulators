@@ -294,6 +294,7 @@ class AerialManipulatorControl {
             manipulator_origin = config["manipulator"]["origin"].as<std::vector<double> >();
             manipulator_q_directions = config["manipulator"]["directions"].as<std::vector<int> >();
             manipulator_q_home_ = config["manipulator"]["home"].as<std::vector<double> >();
+            manipulator_end_effector_offset_ = config["manipulator"]["end_effector_offset"].as<std::vector<double> >();
 
             Tuav_arm_ <<  cos(manipulator_origin[5])*cos(manipulator_origin[4]),  cos(manipulator_origin[5])*sin(manipulator_origin[4])*sin(manipulator_origin[3])-sin(manipulator_origin[5])*cos(manipulator_origin[3]),  cos(manipulator_origin[5])*sin(manipulator_origin[4])*cos(manipulator_origin[3])+sin(manipulator_origin[5])*sin(manipulator_origin[3]), manipulator_origin[0],
                     sin(manipulator_origin[5])*cos(manipulator_origin[4]),  sin(manipulator_origin[5])*sin(manipulator_origin[4])*sin(manipulator_origin[3])+cos(manipulator_origin[5])*cos(manipulator_origin[3]),  sin(manipulator_origin[5])*sin(manipulator_origin[4])*cos(manipulator_origin[3])-cos(manipulator_origin[5])*sin(manipulator_origin[3]), manipulator_origin[1],
@@ -364,7 +365,7 @@ class AerialManipulatorControl {
 
         std::vector<double> kp1_, kp2_, wp_, wd_, M_, B_, K_, dead_zone_, kp0_;
         std::vector<double> q_manipulator_setpoint_, q_manipulator_ref_;
-        std::vector<double> manipulator_q_home_;
+        std::vector<double> manipulator_q_home_, manipulator_end_effector_offset_;
 
         rosgraph_msgs::Clock clock_;
 
@@ -487,6 +488,7 @@ class AerialManipulatorControl {
                 orientationEuler[0] = 0.0;//msg.positions[3];
                 orientationEuler[1] = 0.0;//msg.positions[4];
                 orientationEuler[2] = msg.positions[5];
+                std::cout<<uav_pose_ref_<<std::endl;
 
                 euler2quaternion(orientationEuler, orientationQuaternion);
 
