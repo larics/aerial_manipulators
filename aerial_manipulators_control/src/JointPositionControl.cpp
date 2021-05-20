@@ -141,13 +141,16 @@ void JointPositionControl::LoadParameters(std::string file, std::vector<std::str
 		pub_topic = config[controllers[i]]["command_topic"].as<std::string>();
 		joint_name_.push_back(config[controllers[i]]["joint"].as<std::string>());
 		joint_command_pub_ros_.push_back(n_.advertise<std_msgs::Float64>(pub_topic, 1));
+		joint_state_pub_ros_.push_back(n_.advertise<control_msgs::JointControllerState>(
+			controllers[i] + "/state", 1));
 		joint_control_[i].set_kp(config[controllers[i]]["pid"]["p"].as<double>());
 		joint_control_[i].set_ki(config[controllers[i]]["pid"]["i"].as<double>());
 		joint_control_[i].set_kd(config[controllers[i]]["pid"]["d"].as<double>());
 		joint_control_[i].set_lim_high(config[controllers[i]]["pid"]["high_limit"].as<double>());
 		joint_control_[i].set_lim_low(config[controllers[i]]["pid"]["low_limit"].as<double>());
 		joint_meas_.push_back(0.0);
-		joint_ref_ros_sub_.push_back(n_.subscribe(controllers[i] + "/command", 1, &JointControl::joint_ref_cb_ros, &joint_control_[i]));
+		joint_ref_ros_sub_.push_back(n_.subscribe(
+			controllers[i] + "/command", 1, &JointControl::joint_ref_cb_ros, &joint_control_[i]));
 		joint_control_[i].setReconfigure(ros::NodeHandle("~/"+controllers[i]));
 	}
 
@@ -194,8 +197,16 @@ void JointPositionControl::run(void)
             		joint_meas_[i] = joint_control_[i].get_ref() - position_error;
 
         			velocity_ref.data = joint_control_[i].compute(joint_control_[i].get_ref(), joint_meas_[i], dt);
-
             		joint_command_pub_ros_[i].publish(velocity_ref);
+
+            		control_msgs::JointControllerState state;
+            		state.header.stamp = ros::Time::now();
+            		state.set_point = joint_control_[i].get_ref();
+            		state.process_value = joint_meas_[i];
+            		state.error = position_error;
+            		state.time_step = dt;
+            		state.command = velocity_ref.data;
+            		joint_state_pub_ros_[i].publish(state);
         		}
         	}
 

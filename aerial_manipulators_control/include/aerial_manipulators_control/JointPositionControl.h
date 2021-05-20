@@ -11,6 +11,7 @@
 #include <trajectory_msgs/JointTrajectory.h>
 #include <dynamic_reconfigure/server.h>
 #include <aerial_manipulators_control/JointCtlParamsConfig.h>
+#include <control_msgs/JointControllerState.h>
 
 class JointControl
 {
@@ -49,7 +50,7 @@ class JointPositionControl{
 		ros::Subscriber joint_states_sub_ros_, clock_ros_sub_;
 		ros::Subscriber joint_trajectory_sub_ros_;
 		std::vector<ros::Subscriber> joint_ref_ros_sub_;
-		std::vector<ros::Publisher> joint_command_pub_ros_, pid_state_pub_ros_;
+		std::vector<ros::Publisher> joint_command_pub_ros_, joint_state_pub_ros_;
 		std::vector<std::string> joint_name_;
 		std::vector<double> joint_meas_;
 		JointControl* joint_control_;

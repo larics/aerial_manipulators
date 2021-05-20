@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
     rospack
     std_msgs
     sensor_msgs
+    control_msgs
     dynamic_reconfigure
     dynamixel_workbench_msgs
     impedance_control
