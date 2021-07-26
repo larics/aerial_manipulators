@@ -488,7 +488,7 @@ class AerialManipulatorControl {
                 orientationEuler[0] = 0.0;//msg.positions[3];
                 orientationEuler[1] = 0.0;//msg.positions[4];
                 orientationEuler[2] = msg.positions[5];
-                std::cout<<uav_pose_ref_<<std::endl;
+                //std::cout<<uav_pose_ref_<<std::endl;
 
                 euler2quaternion(orientationEuler, orientationQuaternion);
 
