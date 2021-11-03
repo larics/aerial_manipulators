@@ -436,7 +436,6 @@ std::vector<double> ManipulatorControl::calculateJointSetpoints(geometry_msgs::P
 Eigen::VectorXd ManipulatorControl::calculateJointSetpoints(Eigen::Affine3d end_effector_transform, bool &found_ik_flag)
 {
 	std::vector<double> q_vect(number_of_joints_, 0);
-
 	geometry_msgs::Pose end_effector_pose;
 	end_effector_pose.position.x = end_effector_transform.translation()[0];
 	end_effector_pose.position.y = end_effector_transform.translation()[1];
@@ -471,4 +470,9 @@ Eigen::VectorXd ManipulatorControl::calculateJointSetpoints(Eigen::Affine3d end_
 
 	found_ik_flag = found_ik;
 	return q;
+}
+
+void ManipulatorControl::setJointPositions(Eigen::VectorXd joint_positions)
+{
+	(*kinematic_state_)->setJointGroupPositions(joint_model_group_, joint_positions);
 }
