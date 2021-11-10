@@ -335,6 +335,28 @@ Eigen::MatrixXd ManipulatorControl::getJacobian(void)
 	return jacobian;
 }
 
+Eigen::MatrixXd ManipulatorControl::getJacobian(Eigen::VectorXd q)
+{
+	Eigen::MatrixXd jacobian;
+	Eigen::Vector3d reference_point_position(0.0, 0.0, 0.0);
+	int number_of_links = (*kinematic_model_)->getLinkModels().size();
+	std::string end_effector_name = (*kinematic_model_)->getLinkModels()[number_of_links-1]->getName();
+	
+	if (q.rows() == number_of_joints_){
+		(*kinematic_state_)->setJointGroupPositions(joint_model_group_, q);
+	}
+	else{
+		std::cout << "number_of_joints_ is different than q size in getJacobian.";
+		std::cout << std::endl << "This occured in ManipulatorControl.cpp" << std::endl;
+	}
+
+	(*kinematic_state_)->getJacobian(joint_model_group_,
+		(*kinematic_state_)->getLinkModel(end_effector_name),
+		reference_point_position, jacobian);
+
+	return jacobian;
+}
+
 void ManipulatorControl::publishJointSetpoints(std::vector<double> q) {
 	trajectory_msgs::JointTrajectory joint_setpoints;
 	trajectory_msgs::JointTrajectoryPoint joint_setpoint;
