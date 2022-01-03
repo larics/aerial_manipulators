@@ -512,6 +512,226 @@
 
   </xacro:macro>
 
+  <xacro:macro name="asap_manipulator"
+  params="parent *origin">
+
+    <link name='base'>
+      <inertial>
+        <mass value="0.05591317991066633"/>
+        <origin rpy="0 0 0" xyz="-0.025687986795480712 -0.015782916657658103 0.003881066160475582"/>
+        <inertia ixx="2.3e-05" ixy="-0.0" ixz="-0.0" iyy="2.8e-05" iyz="-0.0" izz="2.6e-05"/>
+      </inertial>
+
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://aerial_manipulators_description/meshes/asap_manipulator/base_link.stl" scale="0.01 0.01 0.01"/>
+        </geometry>
+      </visual>
+    </link>
+
+    <link name="motor_mx_64_1">
+      <inertial>
+        <origin rpy="0 0 0" xyz="-0.018882072464546262 -0.017299911714351128 -0.016862110543539262"/>
+        <mass value="0.16826862591308275"/>
+        <inertia ixx="4e-05" ixy="0.0" ixz="1e-06" iyy="7e-05" iyz="0.0" izz="5.8e-05"/>
+      </inertial>
+
+      <visual>
+        <origin rpy="0 0 0" xyz="-0.019783 -0.001517 -0.020881"/>
+        <geometry>
+          <mesh filename="package://aerial_manipulators_description/meshes/asap_manipulator/motor_mx_64_1.stl" scale="0.01 0.01 0.01"/>
+        </geometry>
+      </visual>
+    </link>
+
+    <link name="veza_vratilo_vratilo_1_1">
+      <inertial>
+        <origin rpy="0 0 0" xyz="0.07549991665769598 8.33423391376209e-08 -0.023499933839516474"/>
+        <mass value="0.04648977062406057"/>
+        <inertia ixx="3.5e-05" ixy="0.0" ixz="0.0" iyy="0.000103" iyz="-0.0" izz="9.2e-05"/>
+      </inertial>
+    
+      <visual>
+        <origin rpy="0 0 0" xyz="-0.015783 0.015783 -0.027381"/>
+        <geometry>
+          <mesh filename="package://aerial_manipulators_description/meshes/asap_manipulator/veza_vratilo_vratilo_1_1.stl" scale="0.01 0.01 0.01"/>
+        </geometry>
+      </visual>
+    </link>
+
+    <link name="motor_mx_64_2">
+      <inertial>
+       <origin rpy="0 0 0" xyz="0.014881905779876664 7.839902109452179e-08 -0.02336211054353828"/>
+       <mass value="0.16826862591308275"/>
+       <inertia ixx="4e-05" ixy="0.0" ixz="-1e-06" iyy="7e-05" iyz="-0.0" izz="5.8e-05"/>
+      </inertial>
+
+      <visual>
+       <origin rpy="0 0 0" xyz="-0.166783 0.015783 -0.027381"/>
+       <geometry>
+         <mesh filename="package://aerial_manipulators_description/meshes/asap_manipulator/motor_mx_64_2.stl" scale="0.01 0.01 0.01"/>
+       </geometry>
+      </visual>
+    </link>
+
+    <link name="veza_vratilo_kuciste_1">
+      <inertial>
+       <origin rpy="0 0 0" xyz="0.09455551025733949 -0.017299916657652164 -0.016999933839072574"/>
+       <mass value="0.07241513915645968"/>
+       <inertia ixx="5.9e-05" ixy="0.0" ixz="0.0" iyy="0.000182" iyz="0.0" izz="0.000197"/>
+      </inertial>
+      
+      <visual>
+       <origin rpy="0 0 0" xyz="-0.162783 -0.001517 -0.020881"/>
+       <geometry>
+         <mesh filename="package://aerial_manipulators_description/meshes/asap_manipulator/veza_vratilo_kuciste_1.stl" scale="0.01 0.01 0.01"/>
+       </geometry>
+      </visual>
+    </link>
+
+    <link name="motor_mx_64_3">
+      <inertial>
+       <origin rpy="0 0 0" xyz="0.014881905779784543 -0.023362093361678785 7.110414176588267e-08"/>
+       <mass value="0.16826862591308275"/>
+       <inertia ixx="4e-05" ixy="-1e-06" ixz="-0.0" iyy="5.8e-05" iyz="0.0" izz="7e-05"/>
+      </inertial>
+
+      <visual>
+       <origin rpy="0 0 0" xyz="-0.346333 -0.007717 -0.003881"/>
+       <geometry>
+         <mesh filename="package://aerial_manipulators_description/meshes/asap_manipulator/motor_mx_64_3.stl" scale="0.01 0.01 0.01"/>
+       </geometry>
+      </visual>
+    </link>
+
+    <link name="veza_kuciste_kuciste_1">
+      <inertial>
+       <origin rpy="0 0 0" xyz="0.0547499166575659 -0.016999916657664666 -0.017299933839172235"/>
+       <mass value="0.01119833573986044"/>
+       <inertia ixx="6e-06" ixy="-0.0" ixz="-0.0" iyy="1e-05" iyz="-0.0" izz="1e-05"/>
+      </inertial>
+      
+      <visual>
+       <origin rpy="0 0 0" xyz="-0.342333 -0.001217 -0.021181"/>
+       <geometry>
+         <mesh filename="package://aerial_manipulators_description/meshes/asap_manipulator/veza_kuciste_kuciste_1.stl" scale="0.01 0.01 0.01"/>
+       </geometry>
+      </visual>
+    </link>
+
+    <link name="motor_mx_64_4">
+      <inertial>
+       <origin rpy="0 0 0" xyz="-0.018882072464639077 -0.016862093361679393 -0.017299938782486327"/>
+       <mass value="0.16826862591308275"/>
+       <inertia ixx="4e-05" ixy="1e-06" ixz="-0.0" iyy="5.8e-05" iyz="-0.0" izz="7e-05"/>
+      </inertial>
+      
+      <visual>
+       <origin rpy="0 0 0" xyz="-0.451833 -0.001217 -0.021181"/>
+       <geometry>
+         <mesh filename="package://aerial_manipulators_description/meshes/asap_manipulator/motor_mx_64_4.stl" scale="0.01 0.01 0.01"/>
+       </geometry>
+      </visual>
+    </link>
+
+    <link name="veza_vratilo_vratilo_2_1">
+      <inertial>
+       <origin rpy="0 0 0" xyz="0.07549991665760297 -0.02349991665765626 6.616082339448714e-08"/>
+       <mass value="0.04648977062406057"/>
+       <inertia ixx="3.5e-05" ixy="0.0" ixz="-0.0" iyy="9.2e-05" iyz="0.0" izz="0.000103"/>
+      </inertial>
+
+      <visual>
+       <origin rpy="0 0 0" xyz="-0.447833 -0.007717 -0.003881"/>
+       <geometry>
+         <mesh filename="package://aerial_manipulators_description/meshes/asap_manipulator/veza_vratilo_vratilo_2_1.stl" scale="0.01 0.01 0.01"/>
+       </geometry>
+      </visual>
+    </link>
+
+    <link name="motor_mx_64_6">
+      <inertial>
+       <origin rpy="0 0 0" xyz="0.014881905779783655 -0.023362093361679492 7.110414143368313e-08"/>
+       <mass value="0.16826862591308275"/>
+       <inertia ixx="4e-05" ixy="-1e-06" ixz="-0.0" iyy="5.8e-05" iyz="0.0" izz="7e-05"/>
+      </inertial>
+
+      <visual>
+       <origin rpy="0 0 0" xyz="-0.598833 -0.007717 -0.003881"/>
+       <geometry>
+         <mesh filename="package://aerial_manipulators_description/meshes/asap_manipulator/motor_mx_64_6.stl" scale="0.01 0.01 0.01"/>
+       </geometry>
+      </visual>
+    </link>
+
+    <joint name="asap_base_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="base"/>
+      <xacro:insert_block name="origin"/>
+    </joint>
+
+    <joint name="Rigid1" type="fixed">
+      <origin rpy="0 0 0" xyz="0.019783 0.001517 0.020881"/>
+      <parent link="base"/>
+      <child link="motor_mx_64_1"/>
+    </joint>
+
+    <joint name="joint1" type="continuous">
+      <origin rpy="0 0 0" xyz="-0.004 -0.0173 0.0065"/>
+      <parent link="motor_mx_64_1"/>
+      <child link="veza_vratilo_vratilo_1_1"/>
+      <axis xyz="-0.0 0.0 1.0"/>
+    </joint>
+
+    <joint name="joint2" type="continuous">
+      <origin rpy="0 0 0" xyz="0.151 0.0 0.0"/>
+      <parent link="veza_vratilo_vratilo_1_1"/>
+      <child link="motor_mx_64_2"/>
+      <axis xyz="0.0 -0.0 -1.0"/>
+    </joint>
+
+    <joint name="Rigid4" type="fixed">
+      <origin rpy="0 0 0" xyz="-0.004 0.0173 -0.0065"/>
+      <parent link="motor_mx_64_2"/>
+      <child link="veza_vratilo_kuciste_1"/>
+    </joint>
+
+    <joint name="joint3" type="continuous">
+      <origin rpy="0 0 0" xyz="0.18355 0.0062 -0.017"/>
+      <parent link="veza_vratilo_kuciste_1"/>
+      <child link="motor_mx_64_3"/>
+      <axis xyz="0.0 -1.0 0.0"/>
+    </joint>
+
+    <joint name="Rigid6" type="fixed">
+      <origin rpy="0 0 0" xyz="-0.004 -0.0065 0.0173"/>
+      <parent link="motor_mx_64_3"/>
+      <child link="veza_kuciste_kuciste_1"/>
+    </joint>
+
+    <joint name="Rigid7" type="fixed">
+      <origin rpy="0 0 0" xyz="0.1095 0.0 0.0"/>
+      <parent link="veza_kuciste_kuciste_1"/>
+      <child link="motor_mx_64_4"/>
+    </joint>
+
+    <joint name="joint4" type="continuous">
+      <origin rpy="0 0 0" xyz="-0.004 0.0065 -0.0173"/>
+      <parent link="motor_mx_64_4"/>
+      <child link="veza_vratilo_vratilo_2_1"/>
+      <axis xyz="0.0 1.0 -0.0"/>
+    </joint>
+
+    <joint name="joint5" type="continuous">
+      <origin rpy="0 0 0" xyz="0.151 0.0 0.0"/>
+      <parent link="veza_vratilo_vratilo_2_1"/>
+      <child link="motor_mx_64_6"/>
+      <axis xyz="0.0 -1.0 0.0"/>
+    </joint>
+
+  </xacro:macro>
+
   <!-- We add a <transmission> block for every joint that we wish to actuate. -->
   <xacro:macro name="transmisija" params="trans_number joint_name">
     <transmission name="transmission_${trans_number}">
