@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: aerial_manipulators_description
+    relative_path: urdf/asap_manipulator_moveit.base.urdf.xacro
+    xacro_args: ""
+  SRDF:
+    relative_path: config/asap_manipulator.srdf
+  CONFIG:
+    author_name: filip
+    author_email: filip.kirn@fer.hr
+    generated_timestamp: 1641300264
