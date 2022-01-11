@@ -5,7 +5,7 @@
   <xacro:property name="enable_bag_plugin" value="false" />
   <xacro:property name="bag_file" value="asap_manipulator.bag" />
 
-  <xacro:include filename="$(find aerial_manipulators_description)/urdf/manipulator_base.urdf.xacro" />
+  <xacro:include filename="$(find aerial_manipulators_description)/urdf/asap_manipulator.base.urdf.xacro" />
 
   <gazebo>
     <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
