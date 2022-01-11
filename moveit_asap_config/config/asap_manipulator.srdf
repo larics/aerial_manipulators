@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!--This does not replace URDF, and is not an extension of URDF.
-    This is a format for representing semantic information about the robot structure.
-    A URDF file must exist for this robot as well, where the joints and the links that are referenced are defined
--->
-<robot name="asap_manipulator">
-    <!--VIRTUAL JOINT: Purpose: this element defines a virtual joint between a robot link and an external frame of reference (considered fixed with respect to the robot)-->
-    <virtual_joint name="virtual_joint" type="fixed" parent_frame="world" child_link="base"/>
-</robot>
