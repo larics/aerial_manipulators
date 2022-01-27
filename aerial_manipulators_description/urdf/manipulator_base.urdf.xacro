@@ -592,9 +592,9 @@
 
     <link name="link5">
       <inertial>
-       <mass value="0.073"/>
+       <mass value="0.0073"/>
         <origin rpy="0 0 0" xyz="0.01488432 0.0 -0.00013634"/>
-        <inertia ixx="0.00001754" ixy="0.0" ixz="-0.00000035" iyx="0.0" iyy="0.00003064" iyz="0.0" izx="-0.00000035" izy="0.0" izz="0.00002513"/>
+        <inertia ixx="0.0000001754" ixy="0.0" ixz="-0.0000000035" iyx="0.0" iyy="0.0000003064" iyz="0.0" izx="-0.0000000035" izy="0.0" izz="0.0000002513"/>
       </inertial>
 
       <visual>
