@@ -1,10 +1,10 @@
-#include <aerial_manipulators_control/WPManipulatorControl.h>
+#include <aerial_manipulators_control/ManipulatorControlNode.h>
 #include <eigen_conversions/eigen_msg.h>
 #include <ros/package.h>
 
 int main(int argc, char **argv)
 {
-	ros::init(argc, argv, "WP_manipulator_control_node");
+	ros::init(argc, argv, "manipulator_control_node");
 
 	ros::NodeHandle private_node_handle_("~");
 	ros::NodeHandle n;
@@ -22,9 +22,9 @@ int main(int argc, char **argv)
 	std::string path = ros::package::getPath("aerial_manipulators_control");
 
 	private_node_handle_.param("rate", rate, int(30));
-	private_node_handle_.param("robot_name", robot_model_name, std::string("wp_manipulator"));
-	private_node_handle_.param("joint_group_name", joint_group_name, std::string("wp_manipulator_arm"));
-	private_node_handle_.param("parameters_file", parameters_file, std::string("/config/wp_manipulator_dh_parameters.yaml"));
+	private_node_handle_.param("robot_name", robot_model_name, std::string("asap_manipulator"));
+	private_node_handle_.param("joint_group_name", joint_group_name, std::string("asap_manipulator_arm"));
+	private_node_handle_.param("parameters_file", parameters_file, std::string("/config/asap_manipulator_parameters.yaml"));
 
 	ros::Publisher manipulator_position_pub_ros_ = n.advertise<geometry_msgs::PoseStamped>("end_effector/pose", 1);
 	ros::Publisher transformation_pub_ = n.advertise<std_msgs::Float64MultiArray>("transformation/world_end_effector", 1);

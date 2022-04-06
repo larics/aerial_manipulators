@@ -57,8 +57,8 @@ target_link_libraries(JointPositionControl pid ${catkin_LIBRARIES} yaml-cpp)
 add_library(ManipulatorControl src/ManipulatorControl.cpp)
 target_link_libraries(ManipulatorControl ${catkin_LIBRARIES} ${Boost_LIBRARIES} yaml-cpp)
 
-add_executable(wp_manipulator_control src/WPManipulatorControl.cpp)
-target_link_libraries(wp_manipulator_control ${catkin_LIBRARIES} ManipulatorControl)
+add_executable(manipulator_control_node src/ManipulatorControlNode.cpp)
+target_link_libraries(manipulator_control_node ${catkin_LIBRARIES} ManipulatorControl)
 
 add_executable(aerial_manipulator_control src/AerialManipulatorControl.cpp)
 target_link_libraries(aerial_manipulator_control ${catkin_LIBRARIES} yaml-cpp aic impedance_control ManipulatorControl)
