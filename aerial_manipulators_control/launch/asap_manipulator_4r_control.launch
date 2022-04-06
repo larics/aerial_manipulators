@@ -24,4 +24,11 @@
     </rosparam>
   </node>
 
+  <node name="manipulator_control_node" pkg="aerial_manipulators_control" type="manipulator_control_node" output="screen" ns="$(arg namespace)">
+        <param name="rate" value="30"/>
+        <param name="robot_name" value="asap_manipulator_4r"/>
+        <param name="joint_group_name" value="asap_manipulator_4r_arm"/>
+        <param name="parameters_file" value="/config/asap_manipulator_4r_parameters.yaml"/>
+  </node>
+
 </launch>
