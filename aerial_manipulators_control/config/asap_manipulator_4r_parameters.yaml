@@ -1,2 +1,3 @@
 joints: ['joint1', 'joint2', 'joint3', 'joint4']
 directions: [-1, -1, 1, -1]
+#directions: [1, 1, 1, 1]
