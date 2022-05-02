@@ -4,20 +4,24 @@
 joint1:
   ID: 2
   Return_Delay_Time: 0
-  Min_Position_Limit: 800
-  Max_Position_Limit: 2000
+  Min_Position_Limit: 1400
+  Max_Position_Limit: 2650
+  Homing_Offset: 150
 joint2:
   ID: 3
   Return_Delay_Time: 0
   Min_Position_Limit: 1300
   Max_Position_Limit: 2700
+  Homing_Offset: 0
 joint3:
   ID: 4
   Return_Delay_Time: 0
   Min_Position_Limit: 900
   Max_Position_Limit: 3100
+  Homing_Offset: 0
 joint4:
   ID: 5
   Return_Delay_Time: 0
-  Min_Position_Limit: 900
-  Max_Position_Limit: 3000
+  Min_Position_Limit: 1024
+  Max_Position_Limit: 3072
+  Homing_Offset: -53
