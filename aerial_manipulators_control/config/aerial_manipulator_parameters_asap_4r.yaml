@@ -1,7 +1,9 @@
 manipulator:
   joints: ['joint1', 'joint2', 'joint3', 'joint4']
-  directions: [-1, -1, 1, -1]
-  origin: [0.0, 0, 0.1, -1.57079632679, -1.57079632679, 0.0]
+  #directions: [-1, -1, 1, -1]
+  directions: [1, 1, 1, 1]
+  #origin: [0.0, 0, 0.1, -1.57079632679, -1.57079632679, 0.0]
+  origin: [0.0, 0, -0.2, 0.0, 0.0, 0.0]
   end_effector_offset: [0.0, 0.0, 0.0]
   home: [0.0, 0.0, 0.0, 0.0]
   lambda: 30.0

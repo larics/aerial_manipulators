@@ -24,7 +24,7 @@ default: &default
     pid: {p: 0.009, i: 0.0, d: 0.0, i_clamp_max: 100, i_clamp_min: -100}
     #pid: {p: 0.014, i: 0.0, d: 0.0, i_clamp_max: 100, i_clamp_min: -100}
 
-asap_manipulator:
+asap_manipulator_4r:
   << : *default
 uav:
   << : *default
