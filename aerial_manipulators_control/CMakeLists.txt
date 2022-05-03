@@ -53,12 +53,20 @@ target_link_libraries(pid ${catkin_LIBRARIES})
 
 add_executable(JointPositionControl src/JointPositionControl.cpp)
 target_link_libraries(JointPositionControl pid ${catkin_LIBRARIES} yaml-cpp)
+add_dependencies(JointPositionControl ${catkin_EXPORTED_TARGETS}
+                   ${PROJECT_NAME}_gencfg)
 
 add_library(ManipulatorControl src/ManipulatorControl.cpp)
 target_link_libraries(ManipulatorControl ${catkin_LIBRARIES} ${Boost_LIBRARIES} yaml-cpp)
+add_dependencies(ManipulatorControl ${catkin_EXPORTED_TARGETS}
+                 ${PROJECT_NAME}_gencfg)
 
 add_executable(wp_manipulator_control src/WPManipulatorControl.cpp)
 target_link_libraries(wp_manipulator_control ${catkin_LIBRARIES} ManipulatorControl)
+add_dependencies(wp_manipulator_control ${catkin_EXPORTED_TARGETS}
+                 ${PROJECT_NAME}_gencfg)
 
 add_executable(aerial_manipulator_control src/AerialManipulatorControl.cpp)
 target_link_libraries(aerial_manipulator_control ${catkin_LIBRARIES} yaml-cpp aic impedance_control ManipulatorControl)
+add_dependencies(aerial_manipulator_control ${catkin_EXPORTED_TARGETS}
+                   ${PROJECT_NAME}_gencfg)
