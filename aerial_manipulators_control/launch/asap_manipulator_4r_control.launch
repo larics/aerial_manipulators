@@ -7,10 +7,10 @@
   <arg name="use_joint_state"         default="true"/>
   <arg name="use_cmd_vel"             default="false"/>
 
-  <param name="dynamixel_info"          value="$(find aerial_manipulators_control)/config/asap_manipulator_4r_controllers.yaml"/>
+  <param name="$(arg namespace)/dynamixel_info"          value="$(find aerial_manipulators_control)/config/asap_manipulator_4r_controllers.yaml"/>
 
-  <node name="$(arg namespace)" pkg="dynamixel_workbench_controllers" type="dynamixel_workbench_controllers"
-        required="true" args="$(arg usb_port) $(arg dxl_baud_rate)">
+  <node name="dynamixel_controller" pkg="dynamixel_workbench_controllers" type="dynamixel_workbench_controllers"
+        required="true" ns="$(arg namespace)" args="$(arg usb_port) $(arg dxl_baud_rate)">
     <param name="use_moveit"              value="$(arg use_moveit)"/>
     <param name="use_joint_states_topic"  value="$(arg use_joint_state)"/>
     <param name="use_cmd_vel_topic"       value="$(arg use_cmd_vel)"/>
@@ -28,7 +28,9 @@
         <param name="rate" value="30"/>
         <param name="robot_name" value="asap_manipulator_4r"/>
         <param name="joint_group_name" value="asap_manipulator_4r_arm"/>
-        <param name="parameters_file" value="/config/asap_manipulator_4r_parameters.yaml"/>
+        <param name="parameters_file" value="/config/asap_manipulator_4r_parameters_real.yaml"/>
+        <remap from="joint_trajectory" to="dynamixel_controller/joint_trajectory"/>
+        <remap from="joint_states" to="dynamixel_controller/joint_states"/>
   </node>
 
 </launch>
