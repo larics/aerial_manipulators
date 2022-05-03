@@ -1,0 +1,2 @@
+joints: ['joint1', 'joint2']
+directions: [1, -1]
