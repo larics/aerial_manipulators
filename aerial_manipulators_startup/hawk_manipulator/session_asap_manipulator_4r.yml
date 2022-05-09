@@ -37,6 +37,10 @@ windows:
       layout: tiled
       panes:
         - waitForRos; roslaunch uav_ros_tracker topp_tracker.launch tracker_config:=custom_config/topp_config_custom.yaml
+        - waitForRos; rosrun larics_motion_planning 
+          joint_trajectory_point_to_kopterworx_and_manipulator.py __ns:=red
+          joint_trajectory_to_kopterworx_and_manipulator/joint_trajectory_point_in:=reference_tracker/joint_trajectory_point
+          joint_trajectory_to_kopterworx_and_manipulator/multi_dof_trajectory_point_out:=position_hold/trajectory
   - manipulator:
       layout: tiled
       panes:
