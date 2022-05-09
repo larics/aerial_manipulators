@@ -38,4 +38,10 @@
     <remap from="simple_dynamixel_controller/joint_trajectory_out" to="dynamixel_controller/joint_trajectory"/>
   </node>
 
+  <node name="icl_gripper_controller" pkg="aerial_manipulators_control" type="icl_gripper_controller.py" output="screen" ns="$(arg namespace)">
+    <param name="max_angle" value="1.5"/>
+    <remap from="icl_gripper_controller/joint1/command" to="joint1/command"/>
+    <remap from="icl_gripper_controller/joint2/command" to="joint2/command"/>
+  </node>
+
 </launch>
