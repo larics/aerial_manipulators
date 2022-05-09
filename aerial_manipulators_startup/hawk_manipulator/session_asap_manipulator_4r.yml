@@ -26,9 +26,9 @@ windows:
         - waitForRos; roslaunch uav_ros_general rc_to_joy.launch
           mapping_file:=$RC_MAPPING
         - waitForRos; roslaunch uav_ros_control pid_carrot.launch 
-          manual_takeoff:=true
-          carrot_land:=false
-          land_disarm_enabled:=false
+          manual_takeoff:=false
+          carrot_land:=true
+          land_disarm_enabled:=true
           odometry:=$ODOM_TOPIC
           msf_callback_enable:=true
           default_params:=$CONTROL_PARAMS
@@ -55,3 +55,11 @@ windows:
           mkdir $HOME/bags/asap_manipulator_4r;
         fi;
         - history -s "rosbag record -a -o $HOME/bags/asap_manipulator_4r/asap_manipulator_4r"
+  - running:
+      layout: tiled
+      panes:
+        - history -s "rosservice call /red/position_hold"
+        - history -s "rosrun uav_ros_general automatic_takeoff.sh"
+        - |
+          history -s "rosservice call /red/land \"data: true\""
+        - history -s "./send_trajectory.sh"
