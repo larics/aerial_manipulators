@@ -57,7 +57,7 @@ class IclGripperController:
 
     def gripper_aperture_callback(self, msg):
         self.aperture = msg.data
-        self.clamp_aperture(0, 1)
+        self.clamp_aperture(-0.1, 1)
         self.new_aperture = True
 
     def clamp_aperture(self, lower, upper):
