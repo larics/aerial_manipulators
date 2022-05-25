@@ -8,6 +8,8 @@
   <arg name="use_cmd_vel"             default="false"/>
 
   <arg name="dynamixel_info"          default="$(find aerial_manipulators_control)/config/icl_dynamixel_info.yaml"/>
+
+  <arg name="gripper_aperture_topic"          default="/manipulator/icl_gripper_controller/gripper_aperture"/>
   
   <param name="$(arg namespace)/dynamixel_info"        value="$(arg dynamixel_info)"/>
 
@@ -42,6 +44,7 @@
     <param name="max_angle" value="1.5"/>
     <remap from="icl_gripper_controller/joint1/command" to="joint1/command"/>
     <remap from="icl_gripper_controller/joint2/command" to="joint2/command"/>
+    <remap from="icl_gripper_controller/gripper_aperture" to="$(arg gripper_aperture_topic)"/>
   </node>
 
 </launch>
