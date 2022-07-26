@@ -21,7 +21,36 @@ windows:
       panes:
         - waitForRos; roslaunch uav_ros_control pid_carrot.launch manual_takeoff:=false
         - rosrun ardupilot_gazebo automatic_takeoff.sh
-  - trajectory:
+  - impedance_control:
       layout: tiled
       panes:
-        - waitForRos; waitForOdometry; roslaunch uav_ros_tracker topp_tracker.launch tracker_config:=./custom_config/topp_config_custom.yaml
+        - |
+          waitForSimulation; sleep 20; roslaunch asap_manipulator_4r planning_context.launch;
+          roslaunch impedance_control impedance_control_asap_4r_hawk_sim.launch namespace:="red"
+        - |
+          cd ; echo -e "\033[0;32mStart Impedance control.";
+          history -s "rosservice call /red/aerial_manipulator_control/start \"data: true\""
+        - |
+          cd ; echo -e "\033[0;32mStop impedance control.";
+          history -s "rosservice call /red/aerial_manipulator_control/start \"data: false\""
+        - |
+          waitForRos; rostopic pub -r 20 /red/asap_manipulator_4r/force_sensor/ft_sensor geometry_msgs/WrenchStamped "
+          header: 
+            seq: 0
+            stamp: 
+              secs: 0
+              nsecs:  0
+            frame_id: "link4"
+          wrench: 
+            force: 
+              x: 0.0
+              y: 0.0
+              z: 0.0
+            torque: 
+              x: 0.0
+              y: 0.0
+              z: 0.0"
+#  - trajectory:
+#      layout: tiled
+#      panes:
+#        - waitForRos; waitForOdometry; roslaunch uav_ros_tracker topp_tracker.launch tracker_config:=./custom_config/topp_config_custom.yaml
