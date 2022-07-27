@@ -1,7 +1,8 @@
 name: hawk_asap_manipulator_sim
 root: ./
 startup_window: roscore
-pre_window: export UAV_NAMESPACE=red
+pre_window: |
+  export UAV_NAMESPACE=red; REFERENCE_DELAY=60
 windows:
   - roscore:
       layout: tiled
@@ -21,20 +22,39 @@ windows:
       panes:
         - waitForRos; roslaunch uav_ros_control pid_carrot.launch manual_takeoff:=false
         - rosrun ardupilot_gazebo automatic_takeoff.sh
+  - motion_planning:
+      layout: tiled
+      panes:
+        - |
+          waitForRos; waitForSimulation; roslaunch asap_manipulator_4r planning_context.launch;
+          roslaunch larics_motion_planning hawk_asap_manipulator_sim.launch
+        - |
+          waitForSimulation; sleep $REFERENCE_DELAY; rostopic pub -1 /$UAV_NAMESPACE/reference_tracker/set_current_trajectory_point trajectory_msgs/JointTrajectoryPoint "
+          positions: [0, 0, 2.0, 0.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+          velocities: [0]
+          accelerations: [0]
+          effort: [0]
+          time_from_start: {secs: 0, nsecs: 0}";
+          rostopic pub -1 /$UAV_NAMESPACE/go_to/reference/joint_trajectory_point trajectory_msgs/JointTrajectoryPoint "
+          positions: [0, 0, 2, 0, 0, 0, 0.0, -0.5, 1, -0.5, 0, 0, 0, 0, 0, 0, 1]
+          velocities: [0]
+          accelerations: [0]
+          effort: [0]
+          time_from_start: {secs: 0, nsecs: 0}"
   - impedance_control:
       layout: tiled
       panes:
         - |
           waitForSimulation; sleep 20; roslaunch asap_manipulator_4r planning_context.launch;
-          roslaunch impedance_control impedance_control_asap_4r_hawk_sim.launch namespace:="red"
+          roslaunch impedance_control impedance_control_asap_4r_hawk_sim.launch namespace:="$UAV_NAMESPACE"
         - |
           cd ; echo -e "\033[0;32mStart Impedance control.";
-          history -s "rosservice call /red/aerial_manipulator_control/start \"data: true\""
+          history -s "rosservice call /$UAV_NAMESPACE/aerial_manipulator_control/start \"data: true\""
         - |
           cd ; echo -e "\033[0;32mStop impedance control.";
-          history -s "rosservice call /red/aerial_manipulator_control/start \"data: false\""
+          history -s "rosservice call /$UAV_NAMESPACE/aerial_manipulator_control/start \"data: false\""
         - |
-          waitForRos; rostopic pub -r 20 /red/asap_manipulator_4r/force_sensor/ft_sensor geometry_msgs/WrenchStamped "
+          waitForRos; rostopic pub -r 20 /$UAV_NAMESPACE/asap_manipulator_4r/force_sensor/ft_sensor geometry_msgs/WrenchStamped "
           header: 
             seq: 0
             stamp: 
@@ -50,6 +70,34 @@ windows:
               x: 0.0
               y: 0.0
               z: 0.0"
+  - running:
+      layout: tiled
+      panes:
+        - |
+          history -s "rosservice call /$UAV_NAMESPACE/multi_dof_trajectory \"waypoints:
+            header:
+              seq: 0
+              stamp: {secs: 0, nsecs: 0}
+              frame_id: ''
+            joint_names: ['']
+            points:
+            - positions: [0, 0, 2, 0, 0, 0, 0.0, -0.5, 1, -0.5, 0, 0, 0, 0, 0, 0, 1]
+              velocities: [0]
+              accelerations: [0]
+              effort: [0]
+              time_from_start: {secs: 0, nsecs: 0}
+            - positions: [2, 0, 2, 0, 0, 0, 0.0, -0.5, 1, -0.5, 0, 0, 0, 0, 0, 0, 1]
+              velocities: [0]
+              accelerations: [0]
+              effort: [0]
+              time_from_start: {secs: 0, nsecs: 0}
+          publish_path: false
+          publish_trajectory: true
+          plan_path: false
+          plan_trajectory: true
+          override_dynamic_constraints: false
+          velocity_constraints: [0]
+          acceleration_constraints: [0]\""; echo -e "\033[0;32mPlan trajectory without force."
 #  - trajectory:
 #      layout: tiled
 #      panes:
