@@ -2,7 +2,8 @@ name: hawk_asap_manipulator_sim
 root: ./
 startup_window: roscore
 pre_window: |
-  export UAV_NAMESPACE=red; REFERENCE_DELAY=60
+  export UAV_NAMESPACE=red; REFERENCE_DELAY=60;
+  source <%= @settings["setup_name"] %>
 windows:
   - roscore:
       layout: tiled
@@ -27,7 +28,7 @@ windows:
       panes:
         - |
           waitForRos; waitForSimulation; roslaunch asap_manipulator_4r planning_context.launch;
-          roslaunch larics_motion_planning hawk_asap_manipulator_sim.launch
+          roslaunch larics_motion_planning hawk_asap_manipulator_sim.launch use_impedance:="true" global_planner_config_file:="$(pwd)/custom_config/hawk_asap_manipulator.yaml"
         - |
           waitForSimulation; sleep $REFERENCE_DELAY; rostopic pub -1 /$UAV_NAMESPACE/reference_tracker/set_current_trajectory_point trajectory_msgs/JointTrajectoryPoint "
           positions: [0, 0, 2.0, 0.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
@@ -48,10 +49,10 @@ windows:
           waitForSimulation; sleep 20; roslaunch asap_manipulator_4r planning_context.launch;
           roslaunch impedance_control impedance_control_asap_4r_hawk_sim.launch namespace:="$UAV_NAMESPACE"
         - |
-          cd ; echo -e "\033[0;32mStart Impedance control.";
+          cd ; echo -e "\033[0;32mStart Impedance control.\e[m";
           history -s "rosservice call /$UAV_NAMESPACE/aerial_manipulator_control/start \"data: true\""
         - |
-          cd ; echo -e "\033[0;32mStop impedance control.";
+          cd ; echo -e "\033[0;32mStop impedance control.\e[m";
           history -s "rosservice call /$UAV_NAMESPACE/aerial_manipulator_control/start \"data: false\""
         - |
           waitForRos; rostopic pub -r 20 /$UAV_NAMESPACE/asap_manipulator_4r/force_sensor/ft_sensor geometry_msgs/WrenchStamped "
@@ -97,7 +98,7 @@ windows:
           plan_trajectory: true
           override_dynamic_constraints: false
           velocity_constraints: [0]
-          acceleration_constraints: [0]\""; echo -e "\033[0;32mPlan trajectory without force."
+          acceleration_constraints: [0]\""; echo -e "\033[0;32mPlan trajectory without force.\e[m"
 #  - trajectory:
 #      layout: tiled
 #      panes:

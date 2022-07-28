@@ -1,0 +1,10 @@
+# Global Planner parameters
+export ABSOLUTE_CONFIG=true
+export MAP_CONFIG=$(rospack find aerial_manipulators_startup)/hawk_asap_manipulator_sim/custom_config/hawk_asap_manipulator.yaml
+export TRAJ_CONFIG=$(rospack find aerial_manipulators_startup)/hawk_asap_manipulator_sim/custom_config/hawk_asap_manipulator.yaml
+export STATE_VALIDITY_CONFIG=$(rospack find aerial_manipulators_startup)/hawk_asap_manipulator_sim/custom_config/hawk_asap_manipulator.yaml
+export KINEMATICS_CONFIG=$(rospack find aerial_manipulators_startup)/hawk_asap_manipulator_sim/custom_config/hawk_asap_manipulator.yaml
+export PATH_PLANNER_CONFIG=$(rospack find aerial_manipulators_startup)/hawk_asap_manipulator_sim/custom_config/hawk_asap_manipulator.yaml
+export MODEL_CORRECTION_CONFIG=$(rospack find larics_motion_planning)/config/model_correction_config_example.yaml
+export OCTOMAP_FILE=$(rospack find larics_motion_planning)/config/empty_map.binvox.bt
+export DH_PARAMETERS_FILE=$(rospack find aerial_manipulators_control)/config/asap_manipulator_4r_parameters.yaml

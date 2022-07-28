@@ -12,5 +12,10 @@ rm .tmuxinator.yml
 # link the session file to .tmuxinator.yml
 ln session.yml .tmuxinator.yml
 
+# additional setup
+SETUP_NAME=$1
+[ -z "$SETUP_NAME" ] && SETUP_NAME=simulation_setup.sh
+
+
 # start tmuxinator
-tmuxinator
+tmuxinator hawk_asap_sim setup_name=$SETUP_NAME
