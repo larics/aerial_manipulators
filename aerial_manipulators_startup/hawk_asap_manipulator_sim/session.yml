@@ -36,12 +36,12 @@ windows:
           accelerations: [0]
           effort: [0]
           time_from_start: {secs: 0, nsecs: 0}";
-          rostopic pub -1 /$UAV_NAMESPACE/go_to/reference/joint_trajectory_point trajectory_msgs/JointTrajectoryPoint "
+          history -s "rostopic pub -1 /$UAV_NAMESPACE/go_to/reference/joint_trajectory_point trajectory_msgs/JointTrajectoryPoint \"
           positions: [0, 0, 2, 0, 0, 0, 0.0, -0.5, 1, -0.5, 0, 0, 0, 0, 0, 0, 1]
           velocities: [0]
           accelerations: [0]
           effort: [0]
-          time_from_start: {secs: 0, nsecs: 0}"
+          time_from_start: {secs: 0, nsecs: 0}\""
   - impedance_control:
       layout: tiled
       panes:
@@ -50,7 +50,13 @@ windows:
           roslaunch impedance_control impedance_control_asap_4r_hawk_sim.launch namespace:="$UAV_NAMESPACE"
         - |
           cd ; echo -e "\033[0;32mStart Impedance control.\e[m";
-          history -s "rosservice call /$UAV_NAMESPACE/aerial_manipulator_control/start \"data: true\""
+          waitForSimulation; sleep 70; rosservice call /$UAV_NAMESPACE/aerial_manipulator_control/start "data: true";
+          rostopic pub -1 /$UAV_NAMESPACE/go_to/reference/joint_trajectory_point trajectory_msgs/JointTrajectoryPoint "
+          positions: [0, 0, 2, 0, 0, 0, 0.0, -0.5, 1, -0.5, 0, 0, 0, 0, 0, 0, 1]
+          velocities: [0]
+          accelerations: [0]
+          effort: [0]
+          time_from_start: {secs: 0, nsecs: 0}"
         - |
           cd ; echo -e "\033[0;32mStop impedance control.\e[m";
           history -s "rosservice call /$UAV_NAMESPACE/aerial_manipulator_control/start \"data: false\""
@@ -75,7 +81,7 @@ windows:
       layout: tiled
       panes:
         - |
-          history -s "rosservice call /$UAV_NAMESPACE/multi_dof_trajectory \"waypoints:
+          history -s "rosservice call /$UAV_NAMESPACE/model_correction_trajectory \"waypoints:
             header:
               seq: 0
               stamp: {secs: 0, nsecs: 0}
