@@ -315,9 +315,6 @@ class AerialManipulatorControl {
             kp0_ = config["AIC"]["INITIAL_GAINS"]["Ke"].as<std::vector<double> >();
             wp_ = config["AIC"]["WEIGHTING_FACTORS"]["Wp"].as<std::vector<double> >();
             wd_ = config["AIC"]["WEIGHTING_FACTORS"]["Wd"].as<std::vector<double> >();
-
-            lambda_uav_ = config["UAV"]["lambda"].as<double>();
-            lambda_manipulator_ = config["manipulator"]["lambda"].as<double>();
             
             impedance_control_x_.setImpedanceFilterMass(M_[0]);
             impedance_control_x_.setImpedanceFilterDamping(B_[0]);
@@ -351,7 +348,7 @@ class AerialManipulatorControl {
         bool start_flag_, force_msg_received_, reconfigure_start_;
         double *xr_, *xc_, *yr_, *yc_, *zr_, *zc_, *xKp_, *yKp_, *zKp_;
         double qxc_[3], qyc_[3], qzc_[3], qwc_[3];
-        double xq_, yq_, zq_, lambda_manipulator_, lambda_uav_;
+        double xq_, yq_, zq_;
         double beta_;
 
         geometry_msgs::PoseStamped uav_pose_meas_, manipulator_pose_meas_, uav_command_pose_, manipulator_command_pose_;
