@@ -15,7 +15,8 @@ int main(int argc, char **argv)
 	std::string parameters_file;
 	geometry_msgs::PoseStamped end_effector_pose;
 	Eigen::Affine3d end_effector_transform;
-	std_msgs::Float64MultiArray transformation_msg;
+	Eigen::MatrixXd jacobian_;
+	std_msgs::Float64MultiArray transformation_msg, jacobian_msg_;
 
 	transformation_msg.data.resize(16);
 
@@ -28,6 +29,7 @@ int main(int argc, char **argv)
 
 	ros::Publisher manipulator_position_pub_ros_ = n.advertise<geometry_msgs::PoseStamped>("end_effector/pose", 1);
 	ros::Publisher transformation_pub_ = n.advertise<std_msgs::Float64MultiArray>("transformation/world_end_effector", 1);
+	ros::Publisher jacobian_pub_ = n.advertise<std_msgs::Float64MultiArray>("jacobian", 1);
 
 	ManipulatorControl wp_control;
 
@@ -69,6 +71,16 @@ int main(int argc, char **argv)
             }
         }
         transformation_pub_.publish(transformation_msg);
+
+        jacobian_ = wp_control.getJacobian()
+
+        for (int i = 0; i < jacobian_.rows(); i++) {
+            for (int j = 0; j < jacobian_.cols(); j++) {
+                jacobian_msg_.data[j + i*jacobian_.rows()] = jacobian_(i, j);
+            }
+        }
+        jacobian_pub_.publish(jacobian_msg_);
+
 
 		loop_rate.sleep();
 	}
