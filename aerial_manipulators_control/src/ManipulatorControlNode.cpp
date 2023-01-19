@@ -72,7 +72,7 @@ int main(int argc, char **argv)
         }
         transformation_pub_.publish(transformation_msg);
 
-        jacobian_ = wp_control.getJacobian()
+        jacobian_ = wp_control.getJacobian();
 
         for (int i = 0; i < jacobian_.rows(); i++) {
             for (int j = 0; j < jacobian_.cols(); j++) {
