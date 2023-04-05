@@ -1,0 +1,81 @@
+# syntax=docker/dockerfile:experimental
+
+ARG DISTRO=focal
+FROM lmark1/uav_ros_stack:$DISTRO
+
+# after every FROM statements all the ARGs get collected and are no longer available. 
+ARG ROS_DISTRO=noetic
+ARG CATKIN_WORKSPACE=uav_ws
+ARG DEBIAN_FRONTEND=nointeractive
+ARG HOME=/root
+
+# Agent forwarding during docker build https://stackoverflow.com/questions/43418188/ssh-agent-forwarding-during-docker-build
+# install ssh client and git
+RUN apt-get install openssh-client git
+
+# download public key for github.com
+RUN mkdir -p -m 0600 ~/.ssh && ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+
+RUN apt-get update && \
+    apt-get install -y \
+        git \
+        openssh-server \
+        libmysqlclient-dev \
+	bash-completion \
+        ros-$ROS_DISTRO-realsense2-camera \
+        ros-$ROS_DISTRO-rgbd-launch \
+        ros-$ROS_DISTRO-openzen-sensor \
+        ros-$ROS_DISTRO-dynamixel-workbench \
+        ros-$ROS_DISTRO-rosserial-python \
+        ros-$ROS_DISTRO-moveit-core \
+        # ros-$ROS_DISTRO-mav-msgs \ -- there is no ros-noetic-mav-msgs?
+        libglew-dev \
+        libglfw3 \
+        libglfw3-dev  \
+        vim  \
+        nano \
+        dnsmasq  \
+        linuxptp && \
+    pip install pypozyx && \
+    pip3 install termcolor \
+        rospkg \
+        lxml \
+        xmltodict
+
+ARG ROS_HOSTNAME=localhost.local
+ARG ROS_MASTER_URI=http://localhost.local:11311
+ARG ROS_IP=localhost.local
+
+WORKDIR $HOME/$CATKIN_WORKSPACE/src
+ENV GIT_SSH_COMMAND="ssh -v" 
+RUN --mount=type=ssh git clone git@github.com:larics/aerial_manipulators -b fzoric/devel && \
+    cd uav_ros_stack && gitman update --force && cd ..
+
+RUN curl https://raw.githubusercontent.com/IntelRealSense/librealsense/master/config/99-realsense-libusb.rules >> /etc/udev/rules.d/99-realsense-libusb.rules
+
+WORKDIR $HOME/$CATKIN_WORKSPACE/src
+RUN catkin build --limit-status-rate 0.2 --continue-on-failure
+
+RUN echo " \
+export ROS_HOSTNAME=$ROS_HOSTNAME" >> $HOME/.bashrc
+RUN echo " \
+export ROS_MASTER_URI=$ROS_MASTER_URI" >> $HOME/.bashrc
+RUN echo " \
+export ROS_IP=$ROS_IP" >> $HOME/.bashrc
+RUN echo "\
+if ! shopt -oq posix; then \n\
+  if [ -f /usr/share/bash-completion/bash_completion ]; then \n\
+    . /usr/share/bash-completion/bash_completion \n\
+  elif [ -f /etc/bash_completion ]; then \n\
+    . /etc/bash_completion \n\
+  fi \n\
+fi" >> $HOME/.bashrc
+
+WORKDIR $HOME/$CATKIN_WORKSPACE/src/uav_ros_indoor
+COPY . .
+RUN catkin build --limit-status-rate 0.2 
+
+RUN mkdir $HOME/bags
+RUN mkdir $HOME/rosbag_default
+
+WORKDIR $HOME/$CATKIN_WORKSPACE/src/
