@@ -74,9 +74,6 @@ int main(int argc, char **argv)
 
         jacobian_ = wp_control.getJacobian();
 
-        std::cout<<jacobian_<<std::endl;
-        std::cout<<std::endl;
-
         /*for (int i = 0; i < jacobian_.rows(); i++) {
             for (int j = 0; j < jacobian_.cols(); j++) {
                 jacobian_msg_.data[j + i*jacobian_.rows()] = jacobian_(i, j);
