@@ -28,7 +28,7 @@ cd docker
 ./run_docker.sh
 ```
 
-** Use `run_docker.sh` only first time to build uam_ros_cont container which is used to run control **
+**Use `run_docker.sh` only first time to build uam_ros_cont container which is used to run control.**
 
 ### Start stack
 
