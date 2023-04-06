@@ -39,12 +39,12 @@ int main(int argc, char **argv)
 	wp_control.LoadParameters(path+parameters_file);
 	wp_control.init(&n);
 
-	while(ros::ok() && !wp_control.isStarted())
+	/*while(ros::ok() && !wp_control.isStarted())
 	{
 		ros::spinOnce();
 		printf("Waiting for measurements.\n");
 		ros::Duration(0.5).sleep();
-	}
+	}*/
 
 	while(ros::ok())
 	{
@@ -72,14 +72,17 @@ int main(int argc, char **argv)
         }
         transformation_pub_.publish(transformation_msg);
 
-        jacobian_ = wp_control.getJacobian()
+        jacobian_ = wp_control.getJacobian();
 
-        for (int i = 0; i < jacobian_.rows(); i++) {
+        std::cout<<jacobian_<<std::endl;
+        std::cout<<std::endl;
+
+        /*for (int i = 0; i < jacobian_.rows(); i++) {
             for (int j = 0; j < jacobian_.cols(); j++) {
                 jacobian_msg_.data[j + i*jacobian_.rows()] = jacobian_(i, j);
             }
-        }
-        jacobian_pub_.publish(jacobian_msg_);
+        }*/
+        //jacobian_pub_.publish(jacobian_msg_);
 
 
 		loop_rate.sleep();

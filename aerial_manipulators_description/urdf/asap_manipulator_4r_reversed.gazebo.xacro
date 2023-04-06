@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+
+<robot name="asap_manipulator_4r_reversed" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:property name="enable_bag_plugin" value="false" />
+  <xacro:property name="bag_file" value="asap_manipulator_4r_reversed.bag" />
+
+  <xacro:include filename="$(find aerial_manipulators_description)/urdf/asap_manipulator_4r_reversed.base.urdf.xacro" />
+
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>/asap_manipulator_4r_reversed</robotNamespace>
+    </plugin>
+  </gazebo>
+
+</robot>

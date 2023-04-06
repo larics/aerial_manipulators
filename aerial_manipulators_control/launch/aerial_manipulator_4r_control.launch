@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+
+<launch>
+    <arg name="name" default="uav" />
+
+    <arg name="use_sim_time" default="false"/>
+
+    <arg name="aerial_manipulator_control_rate" default="100"/>
+    <arg name="aerial_manipulator_control_params_file" default="/config/aerial_manipulator_parameters_asap_4r.yaml"/>
+
+    <arg name="usb_port"                default="/dev/ttyUSB0"/>
+    <arg name="dxl_baud_rate"           default="1000000"/>
+    <arg name="manipulator_name"        default="manipulator"/>
+
+    <arg name="use_moveit"              default="true"/>
+    <arg name="use_joint_state"         default="true"/>
+    <arg name="use_cmd_vel"             default="false"/>
+
+    <param name="$(arg manipulator_name)/dynamixel_info"          value="$(find aerial_manipulators_control)/config/asap_manipulator_4r_controllers.yaml"/>
+
+    <node name="dynamixel_controller" pkg="dynamixel_workbench_controllers" type="dynamixel_workbench_controllers"
+        required="true" ns="$(arg manipulator_name)" args="$(arg usb_port) $(arg dxl_baud_rate)">
+        <param name="use_moveit"              value="$(arg use_moveit)"/>
+        <param name="use_joint_states_topic"  value="$(arg use_joint_state)"/>
+        <param name="use_cmd_vel_topic"       value="$(arg use_cmd_vel)"/>
+        <rosparam>
+            publish_period: 0.010
+            dxl_read_period: 0.010
+            dxl_write_period: 0.010
+            mobile_robot_config:                <!--this values will be set when 'use_cmd_vel' is true-->
+                seperation_between_wheels: 0.160  <!--default value is set by reference of TB3-->
+                radius_of_wheel: 0.033            <!--default value is set by reference of TB3-->
+        </rosparam>
+    </node>
+
+
+    <group ns="$(arg name)">
+        <node name="aerial_manipulator_control" pkg="aerial_manipulators_control" type="aerial_manipulator_control" output="screen">
+            <remap from="aerial_manipulator_control/force_torque_meas_input" to="force_sensor/force_torque_output" />
+            <remap from="aerial_manipulator_control/uav/odometry_meas_input" to="odometry" />
+            <remap from="aerial_manipulator_control/uav/pose_ref_output" to="pose_ref" />
+            <remap from="joint_trajectory" to="/manipulator/dynamixel_controller/joint_trajectory" />
+            <remap from="joint_states" to="/manipulator/dynamixel_controller/joint_states" />
+
+            <param name="rate" value="$(arg aerial_manipulator_control_rate)"/>
+            <param name="parameters_file" value="$(arg aerial_manipulator_control_params_file)"/>
+            <param name="simulation" value="$(arg use_sim_time)"/>
+            <param name="maniupulator_name" value="asap_manipulator_4r"/>
+            <param name="joint_group_name" value="asap_manipulator_4r_arm"/>
+        </node>
+    </group>
+
+</launch>
