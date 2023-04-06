@@ -46,13 +46,13 @@ RUN apt-get update && \
         lxml \
         xmltodict
 
-ARG ROS_HOSTNAME=localhost.local
-ARG ROS_MASTER_URI=http://localhost.local:11311
-ARG ROS_IP=localhost.local
+ARG ROS_HOSTNAME=localhost
+ARG ROS_MASTER_URI=http://localhost:11311
+ARG ROS_IP=localhost
 
 WORKDIR $HOME/$CATKIN_WORKSPACE/src
-ENV GIT_SSH_COMMAND="ssh -v" 
-RUN --mount=type=ssh git clone git@github.com:larics/aerial_manipulators -b fzoric/devel && \
+#ENV GIT_SSH_COMMAND="ssh -v" 
+RUN --mount=type=ssh git clone git@github.com:larics/aerial_manipulators -b fzoric/real_uam && \
     git clone git@github.com:suiauthon/impedance_control.git 
 
 RUN curl https://raw.githubusercontent.com/IntelRealSense/librealsense/master/config/99-realsense-libusb.rules >> /etc/udev/rules.d/99-realsense-libusb.rules
@@ -81,4 +81,4 @@ RUN catkin build --limit-status-rate 0.2
 RUN mkdir $HOME/bags
 RUN mkdir $HOME/rosbag_default
 
-WORKDIR $HOME/$CATKIN_WORKSPACE/src/
+WORKDIR $HOME/$CATKIN_WORKSPACE/src/aerial_manipulators/aerial_manipulators_startup/hawk_manipulator/
