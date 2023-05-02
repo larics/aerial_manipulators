@@ -1,0 +1,98 @@
+# Parameters for mpc_tracker from https://github.com/ctu-mrs/mrs_uav_trackers
+rate: 100.0
+frame_id: "world"
+request_permission: false
+
+model:
+
+  translation:
+
+    n_states: 12
+    n_inputs: 3
+
+    A: [1, 0.01, 0.00005,       0, 0,   0,        0,       0, 0,    0,       0,       0,
+        0,    1,    0.01, 0.00005, 0,   0,        0,       0, 0,    0,       0,       0,
+        0,    0,       1,    0.01, 0,   0,        0,       0, 0,    0,       0,       0,
+        0,    0,       0,       1, 0,   0,        0,       0, 0,    0,       0,       0,
+        0,    0,       0,       0, 1, 0.01, 0.00005,       0, 0,    0,       0,       0,
+        0,    0,       0,       0, 0,    1,    0.01, 0.00005, 0,    0,       0,       0,
+        0,    0,       0,       0, 0,    0,       1,    0.01, 0,    0,       0,       0,
+        0,    0,       0,       0, 0,    0,       0,       1, 0,    0,       0,       0,
+        0,    0,       0,       0, 0,    0,       0,       0, 1, 0.01, 0.00005,       0,
+        0,    0,       0,       0, 0,    0,       0,       0, 0,    1,    0.01, 0.00005,
+        0,    0,       0,       0, 0,    0,       0,       0, 0,    0,       1,    0.01,
+        0,    0,       0,       0, 0,    0,       0,       0, 0,    0,       0,       1]
+
+    B: [0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0.01, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0.01, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0,
+        0, 0, 0.01]
+
+  heading:
+
+    n_states: 4
+    n_inputs: 1
+
+    A: [1, 0.01, 0.00005,       0,
+        0,    1,    0.01, 0.00005,
+        0,    0,       1,    0.01,
+        0,    0,       0,       1]
+
+    B: [0,
+        0,
+        0,
+        0.01]
+
+solver:
+
+  horizon_len: 60 # Horizon length is hardcoded in solver code, this value is used in other parts of the code
+
+  # dt1: 0.01 # dt1 is set as 1/main_rate
+  dt2: 0.2
+
+  xy:
+    verbose: true
+    max_iterations: 25 # default: 25
+    Q: [5000, 0, 10000, 1000]
+
+  z:
+    verbose: true
+    max_iterations: 25 # default: 25
+    Q: [5000, 0, 10000, 1000]
+
+  heading:
+    verbose: true
+    max_iterations: 25 # default: 25
+    Q: [5000, 0, 10000, 1000]
+
+  breaking:
+    enabled: true
+    Q_vel_breaking: 2000.0
+
+constraints:
+
+  xy:
+    velocity: 0.75
+    acceleration: 0.125
+    jerk: 20.0
+    snap: 20.0
+
+  z:
+    velocity: 0.75
+    acceleration: 0.125
+    jerk: 2.0
+    snap: 2.0
+
+  heading:
+    velocity: 0.5
+    acceleration: 0.5
+    jerk: 10.0
+    snap: 10.0

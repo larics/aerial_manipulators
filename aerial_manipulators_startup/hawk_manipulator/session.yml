@@ -34,14 +34,15 @@ windows:
   - trajectory:
       layout: tiled
       panes:
-        - waitForRos; roslaunch uav_ros_tracker topp_tracker.launch tracker_config:=custom_config/topp_config_custom.yaml
-  - manipulator:
-      layout: tiled
-      panes:
-        - waitForRos; roslaunch asap_manipulator_4r planning_context.launch; 
-          roslaunch aerial_manipulators_control asap_manipulator_4r_control.launch namespace:=$UAV_NAMESPACE
-        - waitForRos; rosrun larics_motion_planning asap_manipulator_sinus_test.py __ns:=$UAV_NAMESPACE
+        - history -s "waitForRos; roslaunch uav_ros_tracker topp_tracker.launch tracker_config:=custom_config/topp_config_custom.yaml"
+        - waitForRos; roslaunch uav_ros_tracker mpc_tracker.launch tracker_config:=custom_config/mpc_tracker_smooth_config.yaml
   - bag:
       layout: tiled
       panes:
         - history -s "rosbag record -a -o $HOME/bags/new_tukan_tilt_test"
+  - uav_multimaster_fkie:
+      layout: tiled
+      panes: 
+        - waitForRos; sleep 10s; roslaunch fkie_master_discovery master_discovery.launch
+        - waitForRos; sleep 15s; docker exec -it uam_ros_cont bash; roslaunch fkie_master_sync master_sync.launch
+
