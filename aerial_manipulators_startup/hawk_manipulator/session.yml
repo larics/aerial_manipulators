@@ -41,10 +41,16 @@ windows:
       panes:
         - history -s "rosservice call /red/position_hold \"{}\""
         - waitForRos; roslaunch dynamixel_workbench_controllers arm_dynamixel_controllers.launch
-# DDays multimaster fkie 
   - uav_multimaster_fkie:
       layout: tiled
       panes: 
         - waitForRos; sleep 10s; roslaunch fkie_master_discovery master_discovery.launch
         - waitForRos; sleep 15s; docker exec -it uam_ros_cont bash; roslaunch fkie_master_sync master_sync.launch
-
+  - running: 
+      layout: tiled 
+      panes: 
+        - history -s "rosservice call /red/position_hold \"{}\"" 
+  - bag:
+      layout: tiled
+      panes:
+        - history -s "rosbag record -a -o $HOME/bags/aerial_manipulator"
