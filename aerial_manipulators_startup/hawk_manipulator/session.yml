@@ -29,17 +29,19 @@ windows:
           manual_takeoff:=true 
           odometry:=$ODOM_TOPIC
           msf_callback_enable:=true
-          default_params:=$CONTROL_PARAMS
+          default_params:=/root/uav_ws/src/aerial_manipulators/aerial_manipulators_startup/hawk_manipulator/custom_config/uam_position_ctl.params.yml
           control_type:=$CONTROL_TYPE
   - trajectory:
       layout: tiled
       panes:
         - history -s "waitForRos; roslaunch uav_ros_tracker topp_tracker.launch tracker_config:=custom_config/topp_config_custom.yaml"
         - waitForRos; roslaunch uav_ros_tracker mpc_tracker.launch tracker_config:=custom_config/mpc_tracker_smooth_config.yaml
-  - bag:
+  - arm_position_hold:
       layout: tiled
       panes:
-        - history -s "rosbag record -a -o $HOME/bags/new_tukan_tilt_test"
+        - history -s "rosservice call /red/position_hold \"{}\""
+        - waitForRos; roslaunch dynamixel_workbench_controllers arm_dynamixel_controllers.launch
+# DDays multimaster fkie 
   - uav_multimaster_fkie:
       layout: tiled
       panes: 
